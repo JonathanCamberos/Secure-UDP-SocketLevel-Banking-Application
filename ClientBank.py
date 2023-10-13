@@ -149,10 +149,11 @@ def send_recv_handshake(server_socket: socket, client_private_key, client_public
 
 
 
+
 def initialize_client_state_list(client_private_key, client_public_key):
     global p, socket_error
 
-    print("Inside initliaze client state")
+    # print("Inside initliaze client state")
 
     for p in peers:
 
@@ -183,19 +184,20 @@ def initialize_client_state_list(client_private_key, client_public_key):
 #       - IV Generator            --> For Modes Encryption/Decryption
 
 #   - Providing a Client UI
-#       - Request CRUD (Create, Read, Update, Delete) to Backend Database
-#       - 
+#       - Option for viewing Bank information, Adding functions, Taking out Funds, sending Funds to Friend
 
-#   - Verifying with Certificate Server (TO-DO)
-#       - 
 if __name__ == '__main__':
+
+    # 0.0 - Generating Parameters for Diffie–Hellman exchange via
+    #        private/public key strategy
+
 
     # Generate some parameters. These can be reused.
     p = 0xFFFFFFFFFFFFFFFFC90FDAA22168C234C4C6628B80DC1CD129024E088A67CC74020BBEA63B139B22514A08798E3404DDEF9519B3CD3A431B302B0A6DF25F14374FE1356D6D51C245E485B576625E7EC6F44C42E9A637ED6B0BFF5CB6F406B7EDEE386BFB5A899FA5AE9F24117C4B1FE649286651ECE45B3DC2007CB8A163BF0598DA48361C55D39A69163FA8FD24CF5F83655D23DCA3AD961C62F356208552BB9ED529077096966D670C354E4ABC9804F1746C08CA18217C32905E462E36CE3BE39E772C180E86039B2783A2EC07A28FB5C55DF06F4C52C9DE2BCBF6955817183995497CEA956AE515D2261898FA051015728E5A8AACAA68FFFFFFFFFFFFFFFF
     g = 2
 
-    print("Generating Parameters *******************************************************")
-
+    #print("Generating Parameters *******************************************************")
+    
     params_numbers = dh.DHParameterNumbers(p,g)
     parameters = params_numbers.parameters(default_backend())
 
@@ -204,13 +206,12 @@ if __name__ == '__main__':
     client_public_key    = client_private_key.public_key().public_bytes(Encoding.DER, PublicFormat.SubjectPublicKeyInfo)
 
     print(f"Client Private Key: {client_private_key}")
-    print(f"Length of Client Public Key: --------------> {len(client_public_key)}")
+    #print(f"Length of Client Public Key: --------------> {len(client_public_key)}")
     # print(f"Client Public Key: {client_public_key}")
-    print("testing generate 3333")
 
-    print("Success Parameters ********")
+    #print("Success Parameters ********")
           
-
+    # 0.1 - Argument validation (ignore)
     if len(sys.argv) < 1:
         print("Usage: python3 client.py [--ip_port IP_PORT] ")
         exit(1)
@@ -219,23 +220,33 @@ if __name__ == '__main__':
         parser = argparse.ArgumentParser()
         parser.add_argument('--ip_port',type=int,required=False,help='The port that the BitTorrent clienct connects to')
 
-        print("Correct number of arguments")
-
+        #print("Correct number of arguments")
         args = parser.parse_args()
 
+        if args.ip_port is not None:
+            print(f'Running Client with arguments: {args.ip_port}')
+        else:
+            print("Running Client with default port '7500' ")
 
-        print(f'Running BitTorrent client with arguments: {args.ip_port}')
+    
+    # 1.1 - Client Information
+    client_ip = '0.0.0.0'  # Use '0.0.0.0' to listen on all available interfaces
+    default_port = 7500
 
-    #0.0 Create a Socket and Bind to It
+    # 1.2 - Creating Server Socket 
     client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     client_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 
-
+    #1.3 Binding to Server Socket Object
     if args.ip_port is not None:
-        client_socket.bind(("0.0.0.0", args.ip_port))
+        client_socket.bind((client_ip, args.ip_port))
     else:
-        client_socket.bind(("0.0.0.0", 7500))
+        client_socket.bind((client_ip, default_port))
     
+    #1.4 - No need for listening because we are not a server
+
+
+    #1.5 - Optional Sanity Test Printing
     print("CLIENT 1111111111111111111111111")
     hostname=socket.gethostname()
     IPAddr=socket.gethostbyname(hostname)
@@ -243,12 +254,7 @@ if __name__ == '__main__':
     print("My Computer IP Address is:"+IPAddr)
 
 
-    ########printing stuff
-    print("Testing info --------------")
-
-    ### we will now attempt to connect to test client_2 on port 6969
-    print("Connecting to port: 6969")
-
+    # 2.0 - Adding Bank Server to peer list (connection list)
     peers = []
     peers.append(Peer("Unknown", "0.0.0.0", 6969, -1))
 
@@ -260,15 +266,18 @@ if __name__ == '__main__':
     for p in peers:
         print(p)
 
-
     # Create empty file descriptors lists needed for select call below
     rlist, wlist, xlist = [], [], []
     socket_error = False
 
-    #we have our list of peers, albiet, a single peer
-    #now we must inititalize our client --> State list
+
+    # 2.1 - Begin Handshake with Server
+    #           - Diffie-Hellman Exchange
+    #           - Shared_Secret Exchange
+    #           - Encrypted Handshake Message
     initialize_client_state_list(client_private_key, client_public_key)
 
+     
     print("Have the following Client State List:")
     for c in client_state_list:
         print(c)

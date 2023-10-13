@@ -207,9 +207,9 @@ if __name__ == '__main__':
 
         #print("Correct number of arguments")
         if args.ip_port is not None:
-            print(f'Running BitTorrent client with arguments: {args.ip_port}')
+            print(f'Running Banking Server with arguments: {args.ip_port}')
         else:
-            print("Running BitTorrent client with default port '6969' ")
+            print("Running Banking Server with default port '6969' ")
 
 
     # 1.1 - Server Information
