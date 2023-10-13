@@ -1,5 +1,5 @@
 # UDP-Socket-Banking-Application
-Kinda like payall :)
+Kinda like payall :) 
 
 
 To use - Have 2 Ubuntu Terminals Open (or any terminal) <br /> <br />
