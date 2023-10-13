@@ -11,8 +11,7 @@ Run the following:  <br />
      'pip install virtualenv' <br />
 
   2. Create a virtual enviornment (venv) directory <br />
-      python<version> -m venv <virtual-environment-name> <br />
-      for me it was just --> 'python3 -m venv venv' <br />
+      'python3 -m venv venv' <br />
 
   3. Activate/Turn On the Virtual Environment <br />
      From the your current directory: <br />
