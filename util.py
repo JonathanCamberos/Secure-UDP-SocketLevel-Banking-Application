@@ -1,110 +1,39 @@
-from math import ceil
+from cryptography.hazmat.primitives.kdf.hkdf import HKDF
+from cryptography.hazmat.backends import default_backend
+from cryptography.hazmat.primitives import hashes, hmac
+from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 
-def find_chunks_of_8(bytesObject):
+def generate_hmac(message, key):
+    h = hmac.HMAC(key, hashes.SHA256(), backend=default_backend())
+    h.update(message)
+    return h.finalize()
 
-    #print("Inside Find Chunks of 8 #############")
-    #print("Given bytes object: ", end=" ")
-    #print("{:b}".format(bytesObject))
+def encrypt_message(message, key, iv):
+    cipher = Cipher(algorithms.AES(key), modes.CFB(iv), backend=default_backend())
+    encryptor = cipher.encryptor()
+    return encryptor.update(message) + encryptor.finalize()
 
-    bit_length = bytesObject.bit_length()
-
-    if(bit_length == 0):
-        bit_length = 1
-
-    #print("Bit Length: ", bit_length)
-
-    chunks_of_8 = ceil(bit_length/8)
-
-    #print("Chunks of 8: ", chunks_of_8)
-    return chunks_of_8
-    
-    '''
-    start = 0b11111111
-    chunk = 1
-
-    while(start < find):
-        start = start << 8
-        chunk += 1
-
-    return chunk
-    '''
-
-def convert_bitfield_to_list(bitfield):
-
-    #print("Inside Convert Bitfield to List  *****************")
-    #print("Given bitfield: ", end=" ")
-    #print("{:b}".format(bitfield))
-
-    chunks8 = find_chunks_of_8(bitfield)
-
-    #print("Chunks of 8: ", chunks8)
-
-    maxNum = 2**(8 * chunks8)
-    #print("MaxNum: ", maxNum)
-
-    # currNum = int(maxNum/2)
-
-    currNum = 2**(8 * chunks8 - 1)
-    #print("CurrNum: ", currNum)
-
-    indexCount = 0
-
-    bit_lst = []
-
-    while currNum > 0:
-        currNum = int(currNum)
-        if (bitfield & currNum) == currNum:
-            bit_lst.append(indexCount)
-                
-        currNum = currNum >> 1
-        indexCount+= 1
-
-    return bit_lst
+def decrypt_message(encrypted_message, key, iv):
+    cipher = Cipher(algorithms.AES(key), modes.CFB(iv), backend=default_backend())
+    decryptor = cipher.decryptor()
+    return decryptor.update(encrypted_message) + decryptor.finalize()
 
 
-'''
-def convert_bitfield_to_list(bitfield):
+def generate_shared_secret_key(shared_key):
+    derived_key = HKDF(
+         algorithm=hashes.SHA256(),
+         length=32,
+         salt=None,
+         info=b'handshake data',
+     ).derive(shared_key)
+    return derived_key
 
-    #print("Inside")
 
-    chunks8 = find_chunks_of_8(bitfield)
-    maxNum = 2**(8 * chunks8)
-    # currNum = int(maxNum/2)
-    currNum = 2**(8 * chunks8 - 1)
-    indexCount = 0
-
-    bit_lst = []
-
-    while currNum > 0:
-        currNum = int(currNum)
-        if (bitfield & currNum) == currNum:
-            bit_lst.append(indexCount)
-                
-        currNum = currNum >> 1
-        indexCount+= 1
-
-    return bit_lst
-'''
-
-def convert_list_to_bitfield(lst, num_pieces):
-    bitfield = 0b0
-
-    shift_bits = (ceil(num_pieces / 8) * 8)  - 1  #added '- 1'
-    bitfield = bitfield << shift_bits-1
-
-    for n in lst:
-        bitfield = bitfield | (1 << (shift_bits - n))
-        
-    return bitfield
-    '''
-    # This one may have a bug
-    bitfield = 0b0
-
-    shift_bits = (ceil(num_pieces / 8) * 8)  
-    bitfield = bitfield << shift_bits-1
-
-    for n in lst:
-        bitfield = bitfield | (1 << (shift_bits - n))
-        
-    return bitfield
-    '''
+def generate_shared_iv(shared_key):
+    iv = HKDF(
+         algorithm=hashes.SHA256(),
+         length=16,
+         salt=None,
+         info=b'initialization_vector_string',
+     ).derive(shared_key)
+    return iv

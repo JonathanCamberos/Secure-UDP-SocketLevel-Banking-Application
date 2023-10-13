@@ -2,9 +2,7 @@ import socket
 import select
 import sys
 import argparse
-import time
 import struct
-import pickle
 
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives.asymmetric import dh
@@ -15,24 +13,14 @@ from cryptography.hazmat.primitives.serialization import PublicFormat, Encoding,
 from cryptography.hazmat.primitives import hashes, hmac
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 
+from util import generate_hmac
+from util import encrypt_message
+from util import decrypt_message
+from util import generate_shared_secret_key
+from util import generate_shared_iv
+
 
 client_state_list = []
-
-
-def generate_hmac(message, key):
-    h = hmac.HMAC(key, hashes.SHA256(), backend=default_backend())
-    h.update(message)
-    return h.finalize()
-
-def encrypt_message(message, key, iv):
-    cipher = Cipher(algorithms.AES(key), modes.CFB(iv), backend=default_backend())
-    encryptor = cipher.encryptor()
-    return encryptor.update(message) + encryptor.finalize()
-
-def decrypt_message(encrypted_message, key, iv):
-    cipher = Cipher(algorithms.AES(key), modes.CFB(iv), backend=default_backend())
-    decryptor = cipher.decryptor()
-    return decryptor.update(encrypted_message) + decryptor.finalize()
 
 
 def recv_handshake_from_initiator(server_socket: socket, server_private_key, server_public_key):
@@ -78,21 +66,11 @@ def recv_handshake_from_initiator(server_socket: socket, server_private_key, ser
     # Perform key derivation.
 
 
-    derived_key = HKDF(
-         algorithm=hashes.SHA256(),
-         length=32,
-         salt=None,
-         info=b'handshake data',
-     ).derive(shared_key)
+    derived_key = generate_shared_secret_key(shared_key)
 
     print(f"Derived Key: {derived_key}")
 
-    iv = HKDF(
-         algorithm=hashes.SHA256(),
-         length=16,
-         salt=None,
-         info=b'initialization_vector_string',
-     ).derive(shared_key)
+    iv = generate_shared_iv(shared_key)
 
     print(f"IV: {iv}")
     print("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@")

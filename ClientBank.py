@@ -1,38 +1,22 @@
 import socket
-import select
 import sys
 import argparse
 import struct
-import time
-import pickle
-
 
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives.asymmetric import dh
 from Peer import Peer
 from cryptography.hazmat.primitives.kdf.hkdf import HKDF
 from cryptography.hazmat.primitives.serialization import PublicFormat, Encoding, load_der_public_key
-from cryptography.hazmat.primitives import hashes, hmac
-from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
+from cryptography.hazmat.primitives import hashes
 
+from util import generate_hmac
+from util import encrypt_message
+from util import decrypt_message
+from util import generate_shared_secret_key
+from util import generate_shared_iv
 
 client_state_list = []
-
-
-def generate_hmac(message, key):
-    h = hmac.HMAC(key, hashes.SHA256(), backend=default_backend())
-    h.update(message)
-    return h.finalize()
-
-def encrypt_message(message, key, iv):
-    cipher = Cipher(algorithms.AES(key), modes.CFB(iv), backend=default_backend())
-    encryptor = cipher.encryptor()
-    return encryptor.update(message) + encryptor.finalize()
-
-def decrypt_message(encrypted_message, key, iv):
-    cipher = Cipher(algorithms.AES(key), modes.CFB(iv), backend=default_backend())
-    decryptor = cipher.decryptor()
-    return decryptor.update(encrypted_message) + decryptor.finalize()
 
 
 def send_recv_handshake(server_socket: socket, client_private_key, client_public_key):
@@ -72,21 +56,11 @@ def send_recv_handshake(server_socket: socket, client_private_key, client_public
     # Perform key derivation.
 
 
-    derived_key = HKDF(
-         algorithm=hashes.SHA256(),
-         length=32,
-         salt=None,
-         info=b'handshake data',
-     ).derive(shared_key)
+    derived_key = generate_shared_secret_key(shared_key)
 
     print(f"Derived Key: {derived_key}")
 
-    iv = HKDF(
-         algorithm=hashes.SHA256(),
-         length=16,
-         salt=None,
-         info=b'initialization_vector_string',
-     ).derive(shared_key)
+    iv = generate_shared_iv(shared_key)
 
     print(f"IV: {iv}")
     print("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@")
