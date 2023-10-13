@@ -17,7 +17,7 @@ class Peer:
         self.handshake_complete = 0
 
     def __str__(self):
-        return "Peer -> ID: " + self.peer_id + ", " + self.peer_ip_addr + ":" + str(self.peer_port)
+        return "Peer -> ID: " + self.peer_id + ", " + self.peer_ip_addr + ":" + str(self.peer_port + "Socket" + self.sock)
 
     def __eq__(self, other):
         """Overrides the default implementation"""
