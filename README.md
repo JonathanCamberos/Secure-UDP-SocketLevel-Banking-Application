@@ -2,7 +2,7 @@
 Kinda like payall :)
 
 
-To use - Have 2 Ubuntu Terminals Open (or any termial) and run the following in this order:
+To use - Have 2 Ubuntu Terminals Open (or any terminal) and run the following in this order:
 
   1. python3 ServerBank.py
   2. python3 ClientBank.py
