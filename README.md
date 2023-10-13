@@ -22,5 +22,8 @@ To run the Server/Client, run 1. in the first terminal, run 2. in the second ter
   1. 'python3 ServerBank.py' <br />
   2. 'python3 ClientBank.py' <br />
 
+(You may get a BUNCH of errors from missing libraries, simply download the necessary libraries using pip install)
+Make sure to install them while being active inside the virtual environment (venv)
+
 The result should be the Client talks to the Server, they exchange a secret key via diffie-hellmen, <br />
 and the client sends an ecrypted message using AES and HMAC and the server Decrypts the message and verifies the HMAC <br />
