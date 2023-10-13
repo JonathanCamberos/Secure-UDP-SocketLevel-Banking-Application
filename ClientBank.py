@@ -176,7 +176,18 @@ def initialize_client_state_list(client_private_key, client_public_key):
 
 
 
+# Hello! This is the main code for the Client
+# This section of the Banking Application will be in charge of:
+#   - Starting communications to the Bank Server
+#       - Diffie-Hellman exchange --> Shared_secret
+#       - IV Generator            --> For Modes Encryption/Decryption
 
+#   - Providing a Client UI
+#       - Request CRUD (Create, Read, Update, Delete) to Backend Database
+#       - 
+
+#   - Verifying with Certificate Server (TO-DO)
+#       - 
 if __name__ == '__main__':
 
     # Generate some parameters. These can be reused.
