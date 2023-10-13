@@ -8,7 +8,7 @@ You will need to create a Python Virtual Environment <br />
 Run the following:  <br />
 
   1. Install the vritualenv package <br />
-     pip install virtualenv <br />
+     'pip install virtualenv' <br />
 
   2. Create a virtual enviornment (venv) directory <br />
       python<version> -m venv <virtual-environment-name> <br />
@@ -16,12 +16,12 @@ Run the following:  <br />
 
   3. Activate/Turn On the Virtual Environment <br />
      From the your current directory: <br />
-     source venv/bin/activate <br />
+     'source venv/bin/activate' <br />
 
 To run the Server/Client, run 1. in the first terminal, run 2. in the second terminal  <br />    
 
-  1. python3 ServerBank.py <br />
-  2. python3 ClientBank.py <br />
+  1. 'python3 ServerBank.py' <br />
+  2. 'python3 ClientBank.py' <br />
 
 The result should be the Client talks to the Server, they exchange a secret key via diffie-hellmen, <br />
 and the client sends an ecrypted message using AES and HMAC and the server Decrypts the message and verifies the HMAC <br />
