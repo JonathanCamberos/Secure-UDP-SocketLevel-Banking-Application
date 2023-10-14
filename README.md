@@ -17,9 +17,9 @@ Run the following:  <br />
      From the your current directory: <br />
      'source venv/bin/activate' <br />
 
-After Activating Virtual Environment, Install the necessary Libraries
-Make sure to install them while being active inside the virtual environment (venv)
-or you may break your OS
+After Activating Virtual Environment, Install the necessary Libraries  <br />
+Make sure to install them while being active inside the virtual environment (venv)  <br />
+or you may break your OS  <br />
 
   1. 'pip install cryptography'
 
