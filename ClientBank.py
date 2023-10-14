@@ -164,11 +164,11 @@ if __name__ == '__main__':
 
     loop = True
     while loop:
-        print("\nWhat would you like to do?\n")
-        print("Enter one of the following options:\n")
-        print("1) Say Hello!\n")
-        print("2) Say Request a joke\n")
-        user_input = input("3) Exit the application\n")
+        print("\nWhat would you like to do?")
+        print("Enter one of the following options:")
+        print("1 Say Hello!")
+        print("2 Say Request a joke")
+        user_input = input("3 Exit the application")
 
         if user_input == "1":
             message = getHelloMessage()
@@ -176,9 +176,11 @@ if __name__ == '__main__':
 
         elif user_input == "2":
             print("Asking a joke\n")
+
         elif user_input == "3":
             print("Thanks for playing!\n")
             loop = False
+            
         else:
             user_input = input("Incorrect Input, try again\n")
         
