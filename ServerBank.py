@@ -37,30 +37,25 @@ def recv_handshake_from_initiator(server_socket: socket, server_private_key, ser
     new_peer = Peer("Unknown", peer_ipaddr, peer_socket, peer_sock)
 
 
-    # ########################################################
     #generating parameters in Main
-    print("########################################################")
+    print("#################################")
     print(f"Length of Server Public Key: {len(server_public_key)}")
     
     print(f"Sending to client")
     peer_sock.send(len(server_public_key).to_bytes(2, "big") + server_public_key)
     print(f"Finished sending to client")
-    # ########################################################
+
 
     print("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$")
     # Recv Server Pub key
-    #$ $ $ $ $ $ $ $ $ $ $ $ $ $ $ $ $ $ $ $ $ $ $ $ $ $ $ $ $ $ $ $ $ $
     length = peer_sock.recv(2) # Prepend the length of the message
     peer_public_key = peer_sock.recv(int.from_bytes(length, "big"))
     print(f"Got Peer Public Key with Length of : --------------> {len(peer_public_key)}")
     # print("Got peer public key: " + str(peer_public_key))
     peer_public_key = load_der_public_key(peer_public_key, default_backend())
-    # $ $ $ $ $ $ $ $ $ $ $ $ $ $ $ $ $ $ $ $ $ $ $ $ $ $ $ $ $ $ $ $ $ $
 
 
-
-    # # @ @ @ @ @ @ @ @ @ @ @ @ @ @ @ @ @ @ @ @ @ @ @ @ @
-    print("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@")
+    print("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@")
     
     shared_key_recipe = server_private_key.exchange(peer_public_key)
     # Perform key derivation.
@@ -73,11 +68,8 @@ def recv_handshake_from_initiator(server_socket: socket, server_private_key, ser
     iv = generate_shared_iv(shared_key_recipe)
 
     print(f"IV: {iv}")
-    print("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@")
-    # @ @ @ @ @ @ @ @ @ @ @ @ @ @ @ @ @ @ @ @ @ @ @ @ @
 
 
-    # % % % % % % % % % % % % % % % % % % % % % % % % % % % %
     length = peer_sock.recv(2) # Prepend the length of the message
     length_int = int.from_bytes(length, "big")
     print(f"Encrypted / HMAC Length: {length_int}")
@@ -85,59 +77,6 @@ def recv_handshake_from_initiator(server_socket: socket, server_private_key, ser
     
     unpackaged_message = unpackage_message(recv_encrypted_handshake_message, shared_key, iv)
     
-    
-    # acc_length_int = len(recv_encrypted_handshake_message)
-    # print(f"Encrypted / HMAC Actual Length: {acc_length_int}")
-
-    # x = acc_length_int - 32
-    # message_1, message_2 = struct.unpack(f"{x}s32s", recv_encrypted_handshake_message)
-
-    # message_0 = decrypt_message(message_1, shared_key, iv)
-    
-    # print(f"Message 0 Len: {len(message_0)}")
-    # print(f"Message 0: {message_0}")
-
-    # print(f"Message 1 Len: {len(message_1)}")
-    # print(f"Message 1: {message_1}")
-
-    # print(f"Message 2: {len(message_2)}")
-    # print(f"Message 2: {message_2}")
-    
-    # % % % % % % % % % % % % % % % % % % % % % % % % % % % %
-
-
-
-
-
-    # response_handshake = peer_sock.recv(22)
-    # if len(response_handshake) == 0:
-    #     # print("Couldn't complete the handshake")
-    #     return False
-    # print("Bytes recieved from response to our initial handshake --->", len(response_handshake))
-    # pstrlen, pstr, reserved = struct.unpack("!c13s8s", response_handshake)
-    
-    # pstrlen = int.from_bytes(pstrlen, "big")
-    # pstr = pstr.decode("utf-8")
-
-    # # response_peer_id = response_peer_id.decode("utf-8")
-    # print(pstrlen)
-    # print(pstr)
-    # print(reserved)
-    # # print(info_hash)
-    # # TODO: validate response peer id
-    # # print("Received Peer ID:", response_peer_id)
-    # # print("My Peer ID:", peer_id)
-
-    # pstrlen = b"\x13"
-    # pstr = b"Bank protocol"
-    # reserved = b"\x00\x00\x00\x00\x00\x00\x00\x00"
-    # # peer_id = peer_id.encode("utf-8")
-
-    # #send_test edit
-    # client_state_list.append(new_peer)
-
-    # handshake_message = b"".join([pstrlen, pstr, reserved])
-    # peer_sock.sendall(handshake_message)
 
     return True
 
