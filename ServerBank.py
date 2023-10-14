@@ -18,7 +18,7 @@ from util import encrypt_message
 from util import decrypt_message
 from util import generate_shared_secret_key
 from util import generate_shared_iv
-
+from util import unpackage_message
 
 client_state_list = []
 
@@ -82,22 +82,26 @@ def recv_handshake_from_initiator(server_socket: socket, server_private_key, ser
     length_int = int.from_bytes(length, "big")
     print(f"Encrypted / HMAC Length: {length_int}")
     recv_encrypted_handshake_message = peer_sock.recv(int.from_bytes(length, "big"))
-    acc_length_int = len(recv_encrypted_handshake_message)
-    print(f"Encrypted / HMAC Actual Length: {acc_length_int}")
-
-    x = acc_length_int - 32
-    message_1, message_2 = struct.unpack(f"{x}s32s", recv_encrypted_handshake_message)
-
-    message_0 = decrypt_message(message_1, shared_key, iv)
     
-    print(f"Message 0 Len: {len(message_0)}")
-    print(f"Message 0: {message_0}")
+    unpackaged_message = unpackage_message(recv_encrypted_handshake_message, shared_key, iv)
+    
+    
+    # acc_length_int = len(recv_encrypted_handshake_message)
+    # print(f"Encrypted / HMAC Actual Length: {acc_length_int}")
 
-    print(f"Message 1 Len: {len(message_1)}")
-    print(f"Message 1: {message_1}")
+    # x = acc_length_int - 32
+    # message_1, message_2 = struct.unpack(f"{x}s32s", recv_encrypted_handshake_message)
 
-    print(f"Message 2: {len(message_2)}")
-    print(f"Message 2: {message_2}")
+    # message_0 = decrypt_message(message_1, shared_key, iv)
+    
+    # print(f"Message 0 Len: {len(message_0)}")
+    # print(f"Message 0: {message_0}")
+
+    # print(f"Message 1 Len: {len(message_1)}")
+    # print(f"Message 1: {message_1}")
+
+    # print(f"Message 2: {len(message_2)}")
+    # print(f"Message 2: {message_2}")
     
     # % % % % % % % % % % % % % % % % % % % % % % % % % % % %
 

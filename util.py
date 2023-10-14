@@ -1,3 +1,5 @@
+import struct
+
 from cryptography.hazmat.primitives.kdf.hkdf import HKDF
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes, hmac
@@ -39,7 +41,7 @@ def generate_shared_iv(shared_key_recipe):
     return iv
 
 
-def prepare_message(message, shared_key, iv):
+def package_message(message, shared_key, iv):
 
     # Encrypt the message
     encrypted_message = encrypt_message(message, shared_key, iv)
@@ -64,3 +66,30 @@ def prepare_message(message, shared_key, iv):
     print(f"Packaged Message: {packaged_message}")
 
     return packaged_message
+
+
+def unpackage_message(packaged_message, shared_key, iv):
+
+    HMAC_len = 32
+    package_len = len(packaged_message)
+    print(f"Encrypted + HMAC len: {package_len}")
+
+    encrypted_len = package_len - HMAC_len
+
+    encrypted_message, hmac = struct.unpack(f"{encrypted_len}s32s", packaged_message)
+
+    message = decrypt_message(encrypted_message, shared_key, iv)
+    
+    print(f"Message len: {len(message)}")
+    print(f"Message: {message}")
+
+    print(f"Encrypted Message len: {len(encrypted_message)}")
+    print(f"Encrypted Message: {encrypted_message}")
+
+    print(f"HMAC len: {len(hmac)}")
+    print(f"HMAC: {hmac}")
+
+    print(f"Package len: {len(packaged_message)}")
+    print(f"Package: {packaged_message}")
+
+    return 1

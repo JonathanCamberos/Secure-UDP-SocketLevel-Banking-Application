@@ -15,7 +15,7 @@ from util import encrypt_message
 from util import decrypt_message
 from util import generate_shared_secret_key
 from util import generate_shared_iv
-from util import prepare_message
+from util import package_message
 
 client_state_list = []
 
@@ -75,32 +75,14 @@ def send_recv_handshake(server_socket: socket, client_private_key, client_public
 
     handshake_message = b"".join([pstrlen, pstr, reserved])
 
-    packaged_message = prepare_message(handshake_message, shared_key, iv)
+    packaged_message = package_message(handshake_message, shared_key, iv)
 
     # fullhand_length = len(packaged_message)
     print(f"fullhandshake message: {packaged_message}")
     server_socket.send(len(packaged_message).to_bytes(2, "big") + packaged_message)
 
 
-    response_handshake = server_socket.recv(22)
-    if len(response_handshake) == 0:
-        # print("Couldn't complete the handshake")
-        return False
- 
-    print("Bytes recieved from response to our initial handshake --->", len(response_handshake))
-    pstrlen, pstr, reserved = struct.unpack("!c13s8s", response_handshake)
-    
-    pstrlen = int.from_bytes(pstrlen, "big")
-    pstr = pstr.decode("utf-8")
 
-    # response_peer_id = response_peer_id.decode("utf-8")
-    print(pstrlen)
-    print(pstr)
-    print(reserved)
-    # print(info_hash)
-    # TODO: validate response peer id
-    # print("Received Peer ID:", response_peer_id)
-    # print("My Peer ID:", peer_id)
     return True
 
 
