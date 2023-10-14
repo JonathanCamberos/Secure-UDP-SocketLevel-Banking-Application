@@ -2,20 +2,13 @@ import socket
 import select
 import sys
 import argparse
-import struct
 
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives.asymmetric import dh
 from datetime import datetime
 from Peer import Peer
-from cryptography.hazmat.primitives.kdf.hkdf import HKDF
 from cryptography.hazmat.primitives.serialization import PublicFormat, Encoding, load_der_public_key
-from cryptography.hazmat.primitives import hashes, hmac
-from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 
-from util import generate_hmac
-from util import encrypt_message
-from util import decrypt_message
 from util import generate_shared_secret_key
 from util import generate_shared_iv
 from util import unpackage_message
@@ -32,54 +25,38 @@ def recv_handshake_from_initiator(server_socket: socket, server_private_key, ser
     #accept
     peer_sock, peer_address = server_socket.accept()
     peer_ipaddr, peer_socket = peer_address
-    print(f"Connection from {peer_address}")
+    
+    print(f"\nRecieving Handshake from {peer_address}")
     
     #create new peer (we do not know there peer 'id')
     new_peer = Peer("Unknown", peer_ipaddr, peer_socket, peer_sock)
 
-
-    #generating parameters in Main
-    print("#################################")
-    print(f"Length of Server Public Key: {len(server_public_key)}")
-    
-    print(f"Sending to client")
+    # Sending Server Public Key to Client
     peer_sock.send(len(server_public_key).to_bytes(2, "big") + server_public_key)
-    print(f"Finished sending to client")
 
-
-    print("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$")
-    # Recv Server Pub key
+    # Recv Client Pub key
     length = peer_sock.recv(2) # Prepend the length of the message
-    peer_public_key = peer_sock.recv(int.from_bytes(length, "big"))
-    print(f"Got Peer Public Key with Length of : --------------> {len(peer_public_key)}")
-    # print("Got peer public key: " + str(peer_public_key))
-    peer_public_key = load_der_public_key(peer_public_key, default_backend())
+    client_public_key = peer_sock.recv(int.from_bytes(length, "big"))
+   
+    client_public_key = load_der_public_key(client_public_key, default_backend())
 
+    # Create Key Recipe
+    shared_key_recipe = server_private_key.exchange(client_public_key)
 
-    print("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@")
-    
-    shared_key_recipe = server_private_key.exchange(peer_public_key)
-    # Perform key derivation.
-
-
+    # Generate Shared_key and IV with Client for encrypted communication
     shared_key = generate_shared_secret_key(shared_key_recipe)
-
-    print(f"Shared Key: {shared_key_recipe}")
-
     iv = generate_shared_iv(shared_key_recipe)
 
+    print(f"Shared Key: {shared_key}")
     print(f"IV: {iv}")
 
-
+    # Recv message from client
     recv_encrypted_handshake_message = recieve_package(peer_sock)
 
-    # length = peer_sock.recv(2) # Prepend the length of the message
-    # length_int = int.from_bytes(length, "big")
-    # print(f"Encrypted / HMAC Length: {length_int}")
-    # recv_encrypted_handshake_message = peer_sock.recv(int.from_bytes(length, "big"))
-    
+    # Unpackage/Decrypt message from client
     unpackaged_message = unpackage_message(recv_encrypted_handshake_message, shared_key, iv)
     
+    print("Handshake Success!\n")
 
     return True
 
@@ -112,13 +89,6 @@ if __name__ == '__main__':
     server_private_key = parameters.generate_private_key()
     server_public_key    = server_private_key.public_key().public_bytes(Encoding.DER, PublicFormat.SubjectPublicKeyInfo)
 
-    print(f"Server Private Key: {server_private_key}")
-    #print(f"Length of Server Public Key: --------------> {len(server_public_key)}")
-    #print(f"Server Public Key: {server_public_key}")
-
-    #print("Success Parameters ******************************************************* !")
-
-
     # 0.1 - Argument validation (ignore)
     if len(sys.argv) < 1:
         print("Usage: python3 ServerBank.py [--ip_port IP_PORT] ")
@@ -133,7 +103,7 @@ if __name__ == '__main__':
         if args.ip_port is not None:
             print(f'Running Banking Server with arguments: {args.ip_port}')
         else:
-            print("Running Banking Server with default port '6969' ")
+            print("\nRunning Banking Server with default port '6969'")
 
 
     # 1.1 - Server Information
@@ -161,9 +131,9 @@ if __name__ == '__main__':
     print("My Computer Name is:"+hostname)
     print("My Computer IP Address is:"+IPAddr)
     if args.ip_port is not None:
-        print(f"Server listening on {server_ip}:{args.ip_port}")
+        print(f"Server listening on {server_ip}:{args.ip_port}\n")
     else:
-        print(f"Server listening on {server_ip}:{default_port}")
+        print(f"Server listening on {server_ip}:{default_port}\n")
 
 
     #2.0 - Creating empty file descriptors lists needed for select call below

@@ -106,5 +106,6 @@ def recieve_package(peer_sock):
 
     # Recv as many bytes as message length
     recv_encrypted_handshake_message = peer_sock.recv(package_len)
+    
     return recv_encrypted_handshake_message
 
