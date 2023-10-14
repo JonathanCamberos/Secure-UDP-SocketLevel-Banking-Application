@@ -62,15 +62,15 @@ def recv_handshake_from_initiator(server_socket: socket, server_private_key, ser
     # # @ @ @ @ @ @ @ @ @ @ @ @ @ @ @ @ @ @ @ @ @ @ @ @ @
     print("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@")
     
-    shared_key = server_private_key.exchange(peer_public_key)
+    shared_key_recipe = server_private_key.exchange(peer_public_key)
     # Perform key derivation.
 
 
-    derived_key = generate_shared_secret_key(shared_key)
+    shared_key = generate_shared_secret_key(shared_key_recipe)
 
-    print(f"Derived Key: {derived_key}")
+    print(f"Shared Key: {shared_key_recipe}")
 
-    iv = generate_shared_iv(shared_key)
+    iv = generate_shared_iv(shared_key_recipe)
 
     print(f"IV: {iv}")
     print("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@")
@@ -88,7 +88,7 @@ def recv_handshake_from_initiator(server_socket: socket, server_private_key, ser
     x = acc_length_int - 32
     message_1, message_2 = struct.unpack(f"{x}s32s", recv_encrypted_handshake_message)
 
-    message_0 = decrypt_message(message_1, derived_key, iv)
+    message_0 = decrypt_message(message_1, shared_key, iv)
     
     print(f"Message 0 Len: {len(message_0)}")
     print(f"Message 0: {message_0}")

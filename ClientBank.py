@@ -15,6 +15,7 @@ from util import encrypt_message
 from util import decrypt_message
 from util import generate_shared_secret_key
 from util import generate_shared_iv
+from util import prepare_message
 
 client_state_list = []
 
@@ -52,15 +53,15 @@ def send_recv_handshake(server_socket: socket, client_private_key, client_public
     # # @@@@@@@@@@@@@@@@@@@@@@@@@@
     print("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@")
     
-    shared_key = client_private_key.exchange(server_public_key)
+    shared_key_recipe = client_private_key.exchange(server_public_key)
     # Perform key derivation.
 
 
-    derived_key = generate_shared_secret_key(shared_key)
+    shared_key = generate_shared_secret_key(shared_key_recipe)
 
-    print(f"Derived Key: {derived_key}")
+    print(f"Shared Key: {shared_key}")
 
-    iv = generate_shared_iv(shared_key)
+    iv = generate_shared_iv(shared_key_recipe)
 
     print(f"IV: {iv}")
     print("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@")
@@ -74,30 +75,11 @@ def send_recv_handshake(server_socket: socket, client_private_key, client_public
 
     handshake_message = b"".join([pstrlen, pstr, reserved])
 
+    packaged_message = prepare_message(handshake_message, shared_key, iv)
 
-    # Encrypt the message
-    encrypted_message = encrypt_message(handshake_message, derived_key, iv)
-
-    # Generate HMAC for the encrypted message
-    hmac_value = generate_hmac(encrypted_message, derived_key)
-
-
-    print(f"HandShakeMessage: {handshake_message}" )
-    
-    print(f"Message 0 Len: {len(handshake_message)}")
-    print(f"Message 0: {handshake_message}")
-
-    print(f"Message 1 Len: {len(encrypted_message)}")
-    print(f"Message 1: {encrypted_message}")
-
-    print(f"Message 2: {len(hmac_value)}")
-    print(f"Message 2: {hmac_value}")
-
-    fullhandshake_message = b"".join([encrypted_message, hmac_value])
-
-    fullhand_length = len(fullhandshake_message)
-    print(f"fullhandshake message: {fullhand_length}")
-    server_socket.send(len(fullhandshake_message).to_bytes(2, "big") + fullhandshake_message)
+    # fullhand_length = len(packaged_message)
+    print(f"fullhandshake message: {packaged_message}")
+    server_socket.send(len(packaged_message).to_bytes(2, "big") + packaged_message)
 
 
     response_handshake = server_socket.recv(22)
