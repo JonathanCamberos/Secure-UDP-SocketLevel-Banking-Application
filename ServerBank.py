@@ -19,6 +19,7 @@ from util import decrypt_message
 from util import generate_shared_secret_key
 from util import generate_shared_iv
 from util import unpackage_message
+from util import recieve_package
 
 client_state_list = []
 
@@ -70,10 +71,12 @@ def recv_handshake_from_initiator(server_socket: socket, server_private_key, ser
     print(f"IV: {iv}")
 
 
-    length = peer_sock.recv(2) # Prepend the length of the message
-    length_int = int.from_bytes(length, "big")
-    print(f"Encrypted / HMAC Length: {length_int}")
-    recv_encrypted_handshake_message = peer_sock.recv(int.from_bytes(length, "big"))
+    recv_encrypted_handshake_message = recieve_package(peer_sock)
+
+    # length = peer_sock.recv(2) # Prepend the length of the message
+    # length_int = int.from_bytes(length, "big")
+    # print(f"Encrypted / HMAC Length: {length_int}")
+    # recv_encrypted_handshake_message = peer_sock.recv(int.from_bytes(length, "big"))
     
     unpackaged_message = unpackage_message(recv_encrypted_handshake_message, shared_key, iv)
     
