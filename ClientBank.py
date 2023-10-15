@@ -60,6 +60,9 @@ def send_recv_handshake(server_socket: socket, client_private_key, client_public
 
     send_package(server_socket, packaged_message)
 
+    print(f"Handshake Success!\n")
+
+
     return True
 
 
@@ -75,7 +78,7 @@ def initialize_client_state_list(client_private_key, client_public_key):
         
         # if send_recv_handshake(server_socket, peer_id, tracker):
         if send_recv_handshake(server_socket, client_private_key, client_public_key):
-            print(f"Handshake Success!\n")
+
             server_peer.set_sock(server_socket)
             client_state_list.append(server_peer)
             rlist.append(server_socket)
