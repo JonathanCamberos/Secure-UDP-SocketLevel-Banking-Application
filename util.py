@@ -10,6 +10,19 @@ def generate_hmac(message, key):
     h.update(message)
     return h.finalize()
 
+def validate_hmac(message, key, package_hmac):
+    test_hmac = generate_hmac(message, key)
+
+    print(f"\nPackage Hmac: {package_hmac}")
+    print(f"Test Hmac: {test_hmac}")
+
+    if package_hmac == test_hmac:
+        print("Hmac validated!\n")
+        return True
+    else:
+        print("Hmac rejected!\n")
+        return False
+
 def encrypt_message(message, key, iv):
     cipher = Cipher(algorithms.AES(key), modes.CFB(iv), backend=default_backend())
     encryptor = cipher.encryptor()
@@ -77,10 +90,10 @@ def unpackage_message(packaged_message, shared_key, iv):
 
     encrypted_message, hmac = struct.unpack(f"{encrypted_len}s32s", packaged_message)
 
-    message = decrypt_message(encrypted_message, shared_key, iv)
+    decrypted_message = decrypt_message(encrypted_message, shared_key, iv)
     
-    print(f"Message len: {len(message)}")
-    print(f"Message: {message}")
+    print(f"Message len: {len(decrypted_message)}")
+    print(f"Message: {decrypted_message}")
 
     print(f"Encrypted Message len: {len(encrypted_message)}")
     print(f"Encrypted Message: {encrypted_message}")
@@ -91,7 +104,13 @@ def unpackage_message(packaged_message, shared_key, iv):
     print(f"Package len: {len(packaged_message)}")
     print(f"Package: {packaged_message}")
 
-    return message
+    if validate_hmac(encrypted_message, shared_key, hmac):
+        print(f"Valid Package, acepted!")
+    else:
+        print(f"Invalid Package, rejected!")
+
+
+    return decrypted_message
 
 
 def recieve_package(peer_sock):

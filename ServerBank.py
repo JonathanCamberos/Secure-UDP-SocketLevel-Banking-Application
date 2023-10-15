@@ -125,11 +125,7 @@ if __name__ == '__main__':
 
     #print("We are a serverrrrr We only LISTENINGGGGGG USING OUR EARSSSSS ***************************")
 
-    #1.5 - Optional Sanity Test Printing
-    hostname = socket.gethostname()
-    IPAddr = socket.gethostbyname(hostname)
-    print("My Computer Name is:"+hostname)
-    print("My Computer IP Address is:"+IPAddr)
+    #1.5 - Sanity Test Printing
     if args.ip_port is not None:
         print(f"Server listening on {server_ip}:{args.ip_port}\n")
     else:

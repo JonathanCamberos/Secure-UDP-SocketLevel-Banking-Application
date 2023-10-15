@@ -136,11 +136,8 @@ if __name__ == '__main__':
     #1.4 - No need for listening because we are not a server
 
 
-    #1.5 - Optional Sanity Test Printing
-    hostname=socket.gethostname()
-    IPAddr=socket.gethostbyname(hostname)
-    print("My Computer Name is:"+hostname)
-    print("My Computer IP Address is:"+IPAddr)
+    #1.5 - Sanity Test Printing
+
 
     # 2.0 - Adding Bank Server as peer (Connection list)
     server_peer = Peer("Unknown", "0.0.0.0", 6969, -1)    
