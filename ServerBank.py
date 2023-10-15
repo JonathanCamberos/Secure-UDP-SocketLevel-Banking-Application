@@ -26,7 +26,7 @@ def recv_handshake_from_initiator(server_socket: socket, server_private_key, ser
     peer_sock, peer_address = server_socket.accept()
     peer_ipaddr, peer_socket = peer_address
     
-    print(f"\nRecieving Handshake from {peer_address}")
+    print(f"Connection Success! Attempting Handshake from: {peer_address}")
     
     #create new peer (we do not know there peer 'id')
     new_peer = Peer("Unknown", peer_ipaddr, peer_socket, peer_sock)
@@ -48,7 +48,7 @@ def recv_handshake_from_initiator(server_socket: socket, server_private_key, ser
     iv = generate_shared_iv(shared_key_recipe)
 
     print(f"Shared Key: {shared_key}")
-    print(f"IV: {iv}")
+    print(f"IV: {iv}\n")
 
     # Recv message from client
     recv_encrypted_handshake_message = recieve_package(peer_sock)
@@ -186,7 +186,6 @@ if __name__ == '__main__':
                     continue
 
                 if (r == server_socket):
-                    print("recv handshake")
 
                     recv_handshake_from_initiator(server_socket, server_private_key, server_public_key)
                     continue

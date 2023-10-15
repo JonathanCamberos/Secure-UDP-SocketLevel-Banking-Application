@@ -72,7 +72,6 @@ def unpackage_message(packaged_message, shared_key, iv):
 
     HMAC_len = 32
     package_len = len(packaged_message)
-    print(f"Encrypted + HMAC len: {package_len}")
 
     encrypted_len = package_len - HMAC_len
 
@@ -102,7 +101,7 @@ def recieve_package(peer_sock):
 
     # Message Length
     package_len = int.from_bytes(package_len, "big")
-    print(f"Encrypted / HMAC Length: {package_len}")
+    print(f"Recieved: Encrypted + HMAC Length: {package_len}")
 
     # Recv as many bytes as message length
     recv_encrypted_handshake_message = peer_sock.recv(package_len)

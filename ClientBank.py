@@ -41,12 +41,10 @@ def send_recv_handshake(server_socket: socket, client_private_key, client_public
 
 
     shared_key = generate_shared_secret_key(shared_key_recipe)
-
-    print(f"Shared Key: {shared_key}")
-
     iv = generate_shared_iv(shared_key_recipe)
 
-    print(f"IV: {iv}")
+    print(f"Shared Key: {shared_key}")
+    print(f"IV: {iv}\n")
 
     pstrlen = b"\x13"
     pstr = b"Bank protocol"
