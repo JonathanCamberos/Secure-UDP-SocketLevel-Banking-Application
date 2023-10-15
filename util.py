@@ -13,14 +13,9 @@ def generate_hmac(message, key):
 def validate_hmac(message, key, package_hmac):
     test_hmac = generate_hmac(message, key)
 
-    print(f"\nPackage Hmac: {package_hmac}")
-    print(f"Test Hmac: {test_hmac}")
-
     if package_hmac == test_hmac:
-        print("Hmac validated!\n")
         return True
     else:
-        print("Hmac rejected!\n")
         return False
 
 def encrypt_message(message, key, iv):
@@ -65,23 +60,29 @@ def package_message(message, shared_key, iv):
     # Package Message Together
     packaged_message = b"".join([encrypted_message, hmac_value])
 
-
-    print(f"Message len: {len(message)}")
-    print(f"Message: {message}" )
-    
-    print(f"Encrypted Message len: {len(encrypted_message)}")
-    print(f"Encrypted Message: {encrypted_message}")
-
-    print(f"HMAC len: {len(hmac_value)}")
-    print(f"HMAC: {hmac_value}")
-
-    print(f"Packaged Message len: {len(packaged_message)}")
-    print(f"Packaged Message: {packaged_message}")
-
     return packaged_message
 
 
-def unpackage_message(packaged_message, shared_key, iv):
+def unpackage_message(package, shared_key, iv):
+
+    print(f"Recieved Package len {len(package)}:\nPackage: {package}\n")
+
+    HMAC_len = 32
+    package_len = len(package)
+    encrypted_len = package_len - HMAC_len
+    encrypted_message, hmac = struct.unpack(f"{encrypted_len}s32s", package)
+    decrypted_message = decrypt_message(encrypted_message, shared_key, iv)
+    
+    if validate_hmac(encrypted_message, shared_key, hmac):
+        print(f"Valid Package, acepted!")
+    else:
+        print(f"Invalid Package, rejected!")
+    return decrypted_message
+
+
+def print_sending_package_testing(packaged_message):
+    
+    print(f"Sending Packaged Message: \n{package_message}\n")
 
     HMAC_len = 32
     package_len = len(packaged_message)
@@ -104,13 +105,47 @@ def unpackage_message(packaged_message, shared_key, iv):
     print(f"Package len: {len(packaged_message)}")
     print(f"Package: {packaged_message}")
 
-    if validate_hmac(encrypted_message, shared_key, hmac):
-        print(f"Valid Package, acepted!")
-    else:
-        print(f"Invalid Package, rejected!")
+    test_hmac = generate_hmac(encrypt_message, shared_key)
 
+    print(f"\nPackage Hmac: {hmac}")
+    print(f"Test Hmac: {test_hmac}")
+    return
 
-    return decrypted_message
+def print_unpackage_package_testing(packaged_message, shared_key, iv ):
+
+    print(f"Recv/Unpackaging Package:\n {package_message}\n")
+
+    HMAC_len = 32
+    package_len = len(packaged_message)
+
+    encrypted_len = package_len - HMAC_len
+
+    encrypted_message, hmac = struct.unpack(f"{encrypted_len}s32s", packaged_message)
+
+    decrypted_message = decrypt_message(encrypted_message, shared_key, iv)
+    
+    print(f"Message len: {len(decrypted_message)}")
+    print(f"Message: {decrypted_message}")
+
+    print(f"Encrypted Message len: {len(encrypted_message)}")
+    print(f"Encrypted Message: {encrypted_message}")
+
+    print(f"HMAC len: {len(hmac)}")
+    print(f"HMAC: {hmac}")
+
+    print(f"Package len: {len(packaged_message)}")
+    print(f"Package: {packaged_message}")
+
+    test_hmac = generate_hmac(encrypt_message, shared_key)
+
+    print(f"\nPackage Hmac: {hmac}")
+    print(f"Test Hmac: {test_hmac}")
+
+    return 
+
+def send_package(peer_sock, packaged_message):
+    peer_sock.send(len(packaged_message).to_bytes(2, "big") + packaged_message)
+    return
 
 
 def recieve_package(peer_sock):
@@ -120,7 +155,7 @@ def recieve_package(peer_sock):
 
     # Message Length
     package_len = int.from_bytes(package_len, "big")
-    print(f"Recieved: Encrypted + HMAC Length: {package_len}")
+    print(f"Incoming Package (Encrypted+Hmac) length: {package_len}")
 
     # Recv as many bytes as message length
     recv_encrypted_handshake_message = peer_sock.recv(package_len)

@@ -10,6 +10,7 @@ from cryptography.hazmat.primitives.serialization import PublicFormat, Encoding,
 from util import generate_shared_secret_key
 from util import generate_shared_iv
 from util import package_message
+from util import send_package
 
 from ClientMessages import getHandShakeMessage
 from ClientMessages import getHelloMessage
@@ -57,7 +58,7 @@ def send_recv_handshake(server_socket: socket, client_private_key, client_public
 
     packaged_message = package_message(handshake_message, shared_key, iv)
 
-    server_socket.send(len(packaged_message).to_bytes(2, "big") + packaged_message)
+    send_package(server_socket, packaged_message)
 
     return True
 
