@@ -12,7 +12,6 @@ Run the following:  <br />
 
   2. Create a virtual enviornment (venv) directory <br />
       'python3 -m venv venv' <br />
-      'pip install pymongo' <br />
 
   3. Activate/Turn On the Virtual Environment <br />
      From the your current directory: <br />
@@ -22,7 +21,8 @@ After Activating Virtual Environment, Install the necessary Libraries  <br />
 Make sure to install them while being active inside the virtual environment (venv)  <br />
 or you may break your OS  <br />
 
-  1. 'pip install cryptography'
+  1. 'pip install cryptography' <br />
+  2. 'pip install pymongo' <br />
 
 To run the Server/Client, run 1. in the first terminal, run 2. in the second terminal  <br />    
 
