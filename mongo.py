@@ -1,4 +1,5 @@
 import pymongo 
+from pymongo.errors import DuplicateKeyError
 
 conn_str = "mongodb+srv://jcambero:jcambero@cluster0.nkjnjyb.mongodb.net/"
 
@@ -9,18 +10,22 @@ except Exception:
     print("Error: " + Exception)
 
 
-myDb = client["pymongo_demo"]
+bank_database = client["bank_of_america_database"]
 
 print(client.list_database_names())
 
-myCollection = myDb["demo_collection"]
+user_information_table = bank_database["user_information"]
 
-myDoc = {
+user_info = {
+    "_id": 1,
     "name": "Steve",
-    "message": "This is pymongo demo"
+    "message": "This is my will"
 }
 
-myCollection.insert_one(myDoc)
+try:
+    user_information_table.insert_one(user_info)
+except DuplicateKeyError as e:
+    print(f"Error: {e}")
 
 print(client.list_database_names())
 
