@@ -17,7 +17,7 @@ from ClientMessages import getHelloMessage
 
 p = 0xFFFFFFFFFFFFFFFFC90FDAA22168C234C4C6628B80DC1CD129024E088A67CC74020BBEA63B139B22514A08798E3404DDEF9519B3CD3A431B302B0A6DF25F14374FE1356D6D51C245E485B576625E7EC6F44C42E9A637ED6B0BFF5CB6F406B7EDEE386BFB5A899FA5AE9F24117C4B1FE649286651ECE45B3DC2007CB8A163BF0598DA48361C55D39A69163FA8FD24CF5F83655D23DCA3AD961C62F356208552BB9ED529077096966D670C354E4ABC9804F1746C08CA18217C32905E462E36CE3BE39E772C180E86039B2783A2EC07A28FB5C55DF06F4C52C9DE2BCBF6955817183995497CEA956AE515D2261898FA051015728E5A8AACAA68FFFFFFFFFFFFFFFF
 g = 2   
-client_state_list = []
+server_peer = ''
 shared_key = ''
 iv = ''
 
@@ -66,7 +66,7 @@ def send_recv_handshake(server_socket: socket, client_private_key, client_public
     return True
 
 
-def initialize_client_state_list(client_private_key, client_public_key):
+def initialize_server_peer(client_private_key, client_public_key):
     global server_peer
     try:
 
@@ -80,7 +80,6 @@ def initialize_client_state_list(client_private_key, client_public_key):
         if send_recv_handshake(server_socket, client_private_key, client_public_key):
 
             server_peer.set_sock(server_socket)
-            client_state_list.append(server_peer)
             rlist.append(server_socket)
     except socket.error as e:
         socket_error = True
@@ -154,12 +153,11 @@ if __name__ == '__main__':
     #           - Diffie-Hellman Exchange
     #           - Shared_Secret Exchange
     #           - Encrypted Handshake Message
-    initialize_client_state_list(client_private_key, client_public_key)
+    initialize_server_peer(client_private_key, client_public_key)
 
-    print("Have the following Client State List:")
-    for c in client_state_list:
-        print(c)
-        print(f"Socket {c.sock}")
+
+    print(f"Have the following Server Peer: {server_peer}")
+    print(f"On Socket: {server_peer.sock}")
 
     loop = True
     while loop:
