@@ -76,7 +76,6 @@ def initialize_server_peer(client_private_key, client_public_key):
         
         print(f"Connection Success! Attempting Handshake")
         
-        # if send_recv_handshake(server_socket, peer_id, tracker):
         if send_recv_handshake(server_socket, client_private_key, client_public_key):
 
             server_peer.set_sock(server_socket)

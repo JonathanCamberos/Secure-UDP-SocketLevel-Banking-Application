@@ -80,7 +80,39 @@ def unpackage_message(package, shared_key, iv):
     return decrypted_message
 
 
-def print_sending_package_testing(packaged_message):
+def send_package(peer_sock, packaged_message):
+    result = peer_sock.sendall(len(packaged_message).to_bytes(2, "big") + packaged_message)
+    
+    if result == None:
+        print("Entire Package Sent: Success!")
+    else:
+        print("Partial Package Sent: Error!")
+    
+    return
+
+
+def recieve_package(peer_sock):
+
+    # Prepend the length of the message
+    package_len = peer_sock.recv(2) 
+
+    # Message Length
+    package_len = int.from_bytes(package_len, "big")
+    print(f"Incoming Package (Encrypted+Hmac) length: {package_len}")
+
+    # Recv as many bytes as message length
+    recv_encrypted_handshake_message = peer_sock.recv(package_len)
+    
+    if package_len == len(recv_encrypted_handshake_message):
+        print("Entire Package Recieved: Success!")
+    else:
+        print("Partial Package Recieved: Error!")
+
+    return recv_encrypted_handshake_message
+
+
+
+def print_package_package_testing(packaged_message):
     
     print(f"Sending Packaged Message: \n{package_message}\n")
 
@@ -142,23 +174,3 @@ def print_unpackage_package_testing(packaged_message, shared_key, iv ):
     print(f"Test Hmac: {test_hmac}")
 
     return 
-
-def send_package(peer_sock, packaged_message):
-    peer_sock.send(len(packaged_message).to_bytes(2, "big") + packaged_message)
-    return
-
-
-def recieve_package(peer_sock):
-
-    # Prepend the length of the message
-    package_len = peer_sock.recv(2) 
-
-    # Message Length
-    package_len = int.from_bytes(package_len, "big")
-    print(f"Incoming Package (Encrypted+Hmac) length: {package_len}")
-
-    # Recv as many bytes as message length
-    recv_encrypted_handshake_message = peer_sock.recv(package_len)
-    
-    return recv_encrypted_handshake_message
-
