@@ -16,6 +16,9 @@ from util import recieve_package
 from util import send_public_key
 from util import recieve_public_key
 
+from util import print_package_encrypted_testing
+from util import print_unpackage_encrypted_packaged_testing
+
 client_state_list = []
 
 
@@ -55,9 +58,13 @@ def recv_handshake_from_initiator(server_socket: socket, server_private_key, ser
     # Recv message from client
     recv_encrypted_handshake_message = recieve_package(peer_sock)
 
+
+
     # Unpackage/Decrypt message from client
     unpackaged_message = unpackage_message(recv_encrypted_handshake_message, shared_key, iv)
     
+
+
     print("Handshake Success!\n")
 
     return True

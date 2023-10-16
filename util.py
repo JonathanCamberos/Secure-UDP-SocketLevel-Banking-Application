@@ -160,7 +160,7 @@ def recieve_public_key(peer_sock):
 
 
 
-def print_package_package_testing(packaged_message):
+def print_package_encrypted_testing(packaged_message, shared_key, iv):
     
     print(f"Sending Packaged Message: \n{package_message}\n")
 
@@ -191,7 +191,7 @@ def print_package_package_testing(packaged_message):
     print(f"Test Hmac: {test_hmac}")
     return
 
-def print_unpackage_package_testing(packaged_message, shared_key, iv ):
+def print_unpackage_encrypted_packaged_testing(packaged_message, shared_key, iv ):
 
     print(f"Recv/Unpackaging Package:\n {package_message}\n")
 
