@@ -12,6 +12,7 @@ Run the following:  <br />
 
   2. Create a virtual enviornment (venv) directory <br />
       'python3 -m venv venv' <br />
+      'pip install pymongo' <br />
 
   3. Activate/Turn On the Virtual Environment <br />
      From the your current directory: <br />
