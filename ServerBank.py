@@ -13,6 +13,8 @@ from util import generate_shared_secret_key
 from util import generate_shared_iv
 from util import unpackage_message
 from util import recieve_package
+from util import send_public_key
+from util import recieve_public_key
 
 client_state_list = []
 
@@ -32,11 +34,11 @@ def recv_handshake_from_initiator(server_socket: socket, server_private_key, ser
     new_peer = Peer("Unknown", peer_ipaddr, peer_socket, peer_sock)
 
     # Sending Server Public Key to Client
-    peer_sock.send(len(server_public_key).to_bytes(2, "big") + server_public_key)
+    # peer_sock.send(len(server_public_key).to_bytes(2, "big") + server_public_key)
+    send_public_key(peer_sock, server_public_key)
 
     # Recv Client Pub key
-    length = peer_sock.recv(2) # Prepend the length of the message
-    client_public_key = peer_sock.recv(int.from_bytes(length, "big"))
+    client_public_key = recieve_public_key(peer_sock)
    
     client_public_key = load_der_public_key(client_public_key, default_backend())
 
@@ -47,7 +49,7 @@ def recv_handshake_from_initiator(server_socket: socket, server_private_key, ser
     shared_key = generate_shared_secret_key(shared_key_recipe)
     iv = generate_shared_iv(shared_key_recipe)
 
-    print(f"Shared Key: {shared_key}")
+    print(f"\nShared Key: {shared_key}")
     print(f"IV: {iv}\n")
 
     # Recv message from client

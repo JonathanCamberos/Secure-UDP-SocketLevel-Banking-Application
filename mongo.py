@@ -34,15 +34,10 @@ print(client.list_database_names())
 def add_user_to_database():
 
     input_username = input("Select a username:\n\nEnter Here: ")
-     
-
     return 1
 
 
 def add_funds_to_user():
-
-
-
     return 1
 
 

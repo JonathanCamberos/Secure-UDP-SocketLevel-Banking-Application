@@ -116,6 +116,50 @@ def recieve_package(peer_sock):
 
 
 
+# remember this is the diffie-helman step
+# so neither will be encrypted
+def send_public_key(peer_sock, public_key):
+
+
+    expected_public_key_len = len(public_key).to_bytes(2, "big")
+
+    result = peer_sock.sendall(expected_public_key_len + public_key)
+    
+    if result == None:
+        print(f"Sent Public Key Len: {len(public_key)}")
+        print("Entire Public Key Sent: Success!")
+    else:
+        print("\nPartial Public Key Sent: Error!\n")
+    
+    return
+
+# remember this is the diffie-helman step
+# so neither will be encrypted
+def recieve_public_key(peer_sock):
+
+    # Prepend the length of the message
+    public_key_len = peer_sock.recv(2) 
+
+    # Message Length
+    public_key_len = int.from_bytes(public_key_len, "big")
+    
+    # Recv as many bytes as message length
+    recv_public_key = peer_sock.recv(public_key_len)
+
+    if public_key_len == len(recv_public_key):
+        print(f"Expected Recv Public Key Len: {public_key_len}, Recv: {len(recv_public_key)}")
+        print("Entire Public Key Recieved: Success!")
+    else:
+        print("Partial Public KEy Recieved: Error!")
+
+    return recv_public_key
+
+
+
+
+
+
+
 def print_package_package_testing(packaged_message):
     
     print(f"Sending Packaged Message: \n{package_message}\n")

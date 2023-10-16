@@ -11,6 +11,8 @@ from util import generate_shared_secret_key
 from util import generate_shared_iv
 from util import package_message
 from util import send_package
+from util import send_public_key
+from util import recieve_public_key
 
 from ClientMessages import prepare_HandShake_Message
 from ClientMessages import prepare_Hello_Message
@@ -29,13 +31,15 @@ def send_recv_handshake(server_socket: socket, client_private_key, client_public
     """
 
     # Recv Server Pub key
-    length = server_socket.recv(2) # Prepend the length of the message
-    server_public_key = server_socket.recv(int.from_bytes(length, "big"))
+    # length = server_socket.recv(2) # Prepend the length of the message
+    # server_public_key = server_socket.recv(int.from_bytes(length, "big"))
+
+    server_public_key = recieve_public_key(server_socket)
 
     server_public_key = load_der_public_key(server_public_key, default_backend())
 
     # Sending Client Public Key to Server
-    server_socket.send(len(client_public_key).to_bytes(2, "big") + client_public_key)
+    send_public_key(server_socket, client_public_key)
 
     shared_key_recipe = client_private_key.exchange(server_public_key)
     # Perform key derivation.
@@ -44,7 +48,7 @@ def send_recv_handshake(server_socket: socket, client_private_key, client_public
     shared_key = generate_shared_secret_key(shared_key_recipe)
     iv = generate_shared_iv(shared_key_recipe)
 
-    print(f"Shared Key: {shared_key}")
+    print(f"\nShared Key: {shared_key}")
     print(f"IV: {iv}\n")
 
 
