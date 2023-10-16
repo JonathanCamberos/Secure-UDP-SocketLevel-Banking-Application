@@ -41,17 +41,15 @@ def send_recv_handshake(server_socket: socket, client_private_key, client_public
     # Sending Client Public Key to Server
     send_public_key(server_socket, client_public_key)
 
-    shared_key_recipe = client_private_key.exchange(server_public_key)
     # Perform key derivation.
-
-
+    shared_key_recipe = client_private_key.exchange(server_public_key)
+    
     shared_key = generate_shared_secret_key(shared_key_recipe)
     iv = generate_shared_iv(shared_key_recipe)
 
     print(f"\nShared Key: {shared_key}")
     print(f"IV: {iv}\n")
-
-
+    
     handshake_message = prepare_HandShake_Message()
 
     packaged_message = package_message(handshake_message, shared_key, iv)
@@ -78,6 +76,7 @@ def initialize_server_peer(client_private_key, client_public_key):
 
             server_peer.set_sock(server_socket)
             rlist.append(server_socket)
+            
     except socket.error as e:
         socket_error = True
 
