@@ -12,8 +12,8 @@ from util import generate_shared_iv
 from util import package_message
 from util import send_package
 
-from ClientMessages import getHandShakeMessage
-from ClientMessages import getHelloMessage
+from ClientMessages import prepare_HandShake_Message
+from ClientMessages import prepare_Hello_Message
 
 p = 0xFFFFFFFFFFFFFFFFC90FDAA22168C234C4C6628B80DC1CD129024E088A67CC74020BBEA63B139B22514A08798E3404DDEF9519B3CD3A431B302B0A6DF25F14374FE1356D6D51C245E485B576625E7EC6F44C42E9A637ED6B0BFF5CB6F406B7EDEE386BFB5A899FA5AE9F24117C4B1FE649286651ECE45B3DC2007CB8A163BF0598DA48361C55D39A69163FA8FD24CF5F83655D23DCA3AD961C62F356208552BB9ED529077096966D670C354E4ABC9804F1746C08CA18217C32905E462E36CE3BE39E772C180E86039B2783A2EC07A28FB5C55DF06F4C52C9DE2BCBF6955817183995497CEA956AE515D2261898FA051015728E5A8AACAA68FFFFFFFFFFFFFFFF
 g = 2   
@@ -47,14 +47,8 @@ def send_recv_handshake(server_socket: socket, client_private_key, client_public
     print(f"Shared Key: {shared_key}")
     print(f"IV: {iv}\n")
 
-    pstrlen = b"\x13"
-    pstr = b"Bank protocol"
-    reserved = b"\x00\x00\x00\x00\x00\x00\x00\x00"
-    # peer_id = peer_id.encode("utf-8")
 
-    handshake_message = b"".join([pstrlen, pstr, reserved])
-
-    handshake_message = getHandShakeMessage()
+    handshake_message = prepare_HandShake_Message()
 
     packaged_message = package_message(handshake_message, shared_key, iv)
 
@@ -164,10 +158,11 @@ if __name__ == '__main__':
         print("Enter one of the following options:")
         print("1 Say Hello!")
         print("2 Say Request a joke")
-        user_input = input("3 Exit the application")
+        user_input = input("3 Exit the application\n\nEnter Here: ")
+
 
         if user_input == "1":
-            message = getHelloMessage()
+            message = prepare_Hello_Message()
             packaged_message = package_message(message, shared_key, iv)
 
         elif user_input == "2":
@@ -180,14 +175,14 @@ if __name__ == '__main__':
         else:
             user_input = input("Incorrect Input, try again\n")
         
-    print("\nClosing the Following Client State List:")
-    for c in client_state_list:
-        print(c)
-        print(f"Socket {c.sock}")
-        c.sock.close()
+    print(f"\nClosing the Following Server Peer: {server_peer}")
+    print(f"Server Peer Socket: {server_peer.sock}")
+    server_peer.sock.close()
+    print(f"Socket Closed!")
     
-    print("Closing Our Own Socket")
+    print("Closing Our Own Socket\n")
     client_socket.close()
     
+    print("Thats all folks! :)")    
 
 

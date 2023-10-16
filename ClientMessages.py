@@ -1,6 +1,6 @@
 
 
-def getHandShakeMessage():
+def prepare_HandShake_Message():
     pstrlen = b"\x13"
     pstr = b"Bank protocol"
     reserved = b"\x00\x00\x00\x00\x00\x00\x00\x00"
@@ -10,7 +10,7 @@ def getHandShakeMessage():
 
     return handshake_message
 
-def getHelloMessage():
+def prepare_Hello_Message():
 
     pstrlen = b"\x13"
     pstr = b"Bank protocol"
