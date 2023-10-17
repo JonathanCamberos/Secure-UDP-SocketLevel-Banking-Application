@@ -106,14 +106,20 @@ def get_hashed_password(username):
 def get_savings(username):
     user_data = user_information_table.find_one({'username': username})
     if user_data:
-        return user_data.get('savings', '')
+
+        raw_user_savings = user_data.get('savings', '')
+        int_user_savings = convert_to_integer(raw_user_savings)
+        print(f"Grabbed Raw Savings: {raw_user_savings}")
+        print(f"translated to Int Savings: {int_user_savings}")
+        
+        return int_user_savings
     return None
 
 # Function to update user's savings based on the username
 def update_savings(username, new_savings):
     result = user_information_table.update_one({'username': username}, {'$set': {'savings': new_savings}})
     if result.modified_count > 0:
-        print(f"Savings for {username} updated to {new_savings}.")
+        print(f"Savings for {username} updated to {new_savings}")
     else:
         print(f"User {username} not found.")
 
@@ -138,7 +144,7 @@ def verify_transaction(username, type, amount):
     elif type == 2:
         current_savings = get_savings(username)
         res = current_savings - amount
-        if res > 0:
+        if res >= 0:
             return True
         else:
             False
@@ -155,16 +161,16 @@ def proceed_transation(username, type, transaction_amount):
 
     if type == 1:
         current_savings = get_savings(username)
-        c = current_savings + transaction_amount
+        new_savings = current_savings + transaction_amount
         update_savings(username, new_savings)
 
         return True
     
     elif type == 2:
-        
         current_savings = get_savings(username)
         new_savings = current_savings - transaction_amount
         update_savings(username, new_savings)
+
         return True
     else:
         print("bad transaction type")
@@ -188,15 +194,12 @@ def verified_modification_user(username):
 
         if user_input == "1":
             transaction_amount = input("Enter Amount to Add to Account\n\nEnter Here: ")            
-            
-
             transaction_amount = convert_to_integer(transaction_amount)
 
             if transaction_amount == None:
                 print("Error: 'savings' must be an integer.")
                 return
 
-            
             if verify_transaction(username, 1, transaction_amount):
                 print(f"Adding {transaction_amount} is possible")
                 print(f"Proceeding!")
@@ -204,8 +207,22 @@ def verified_modification_user(username):
             else:
                 print(f"Adding {transaction_amount} is not possible")
                 print(f"Have a good day!\n")
+        
         elif user_input == "2":
-            modify_user_savings()
+            transaction_amount = input("Enter Amount to Subtract from Account\n\nEnter Here: ")            
+            transaction_amount = convert_to_integer(transaction_amount)
+
+            if transaction_amount == None:
+                print("Error: 'savings' must be an integer.")
+                return
+
+            if verify_transaction(username, 2, transaction_amount):
+                print(f"Subtracting {transaction_amount} is possible")
+                print(f"Proceeding!")
+                proceed_transation(username, 2, transaction_amount)
+            else:
+                print(f"Subtracting {transaction_amount} is not possible")
+                print(f"Have a good day!\n")
 
         elif user_input == "3":
             remove_user()
