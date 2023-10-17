@@ -1,15 +1,12 @@
 
 import pymongo 
 import uuid
-import os
 import secrets
+import time
 
 from pymongo.errors import DuplicateKeyError
-from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
-from base64 import urlsafe_b64encode, urlsafe_b64decode
-
 
 conn_str = "mongodb+srv://jcambero:jcambero@cluster0.nkjnjyb.mongodb.net/"
 bank_database = ''
@@ -39,10 +36,6 @@ def convert_to_integer(s):
     except ValueError:
         print(f"Error: Unable to convert '{s}' to an integer.")
         return None
-
-
-
-
 
 def add_user_to_database():
 
@@ -151,7 +144,6 @@ def verify_transaction(username, type, amount):
     else:
         print("bad transaction type")
         return
-
     
 
 def proceed_transation(username, type, transaction_amount):
@@ -179,31 +171,36 @@ def proceed_transation(username, type, transaction_amount):
 
 def verified_modification_user(username):
     
-    print("Logged In Successfully!")
     print(f"Welcome: {username}")
+    
 
     loop = True
     while loop:
-    
-        print("\nWhat would you like to do?")
+        current_savings = get_savings(username)
+        print(f"\nCurrently you have: {current_savings}\n")
+
+        print("What would you like to do?")
         print("Enter one of the following options:")
         print("1 - Add Funds")
         print("2 - Remove Funds")
-        print("3 - Send Money to User")
         user_input = input("Exit - Exit the application\n\nEnter Here: ")
 
         if user_input == "1":
             transaction_amount = input("Enter Amount to Add to Account\n\nEnter Here: ")            
             transaction_amount = convert_to_integer(transaction_amount)
 
+            # None is err returned from convert_to_integer function on err
             if transaction_amount == None:
                 print("Error: 'savings' must be an integer.")
                 return
 
+            # checks if enough funds for transaction
             if verify_transaction(username, 1, transaction_amount):
+
                 print(f"Adding {transaction_amount} is possible")
                 print(f"Proceeding!")
                 proceed_transation(username, 1, transaction_amount)
+            
             else:
                 print(f"Adding {transaction_amount} is not possible")
                 print(f"Have a good day!\n")
@@ -220,15 +217,10 @@ def verified_modification_user(username):
                 print(f"Subtracting {transaction_amount} is possible")
                 print(f"Proceeding!")
                 proceed_transation(username, 2, transaction_amount)
+
             else:
                 print(f"Subtracting {transaction_amount} is not possible")
                 print(f"Have a good day!\n")
-
-        elif user_input == "3":
-            remove_user()
-
-        elif user_input == "4":
-            pull_user_data()
 
         elif user_input == "Exit":
             print("Exiting Mongo Python Tester - Thanks for playing!\n")
@@ -237,105 +229,64 @@ def verified_modification_user(username):
         else:
             user_input = input("Incorrect Input, try again\n")
 
-    
     return
 
 def modify_user_savings():
 
     print("Please Login:\n")
     input_username = input("\nUsername:\nEnter Here: ")
-    
-    user_salt = get_salt(input_username)
 
-    print(f"\nUser {input_username} has salt: {user_salt}\n")
-
-    
-    input_password = input("\nPassword:\nEnter Here:")
-
-
-
-    if verify_password(input_username, input_password, user_salt) == True:
-        print("Successfully Logged In\n")
-
+    if login_verification(input_username) == True:
         verified_modification_user(input_username)
     else:
-        print("Incorrect Username or Password\n")
-        return 2
+        return
+
+def login_verification(username):
     
-    # input_savings = input("\nAmount of money input\nEnter Here: ")
-    # input_savings = convert_to_integer(input_savings)
+    user_salt = get_salt(username)
 
-    # input_password = input("\nChoose a password:\nEnter Here: ")
-    # input_password = hash_password(input_password, salt)
+    print(f"\nUser {username} has salt: {user_salt}\n")
 
-    #  # Validate - User Already Exists
-    # if user_exists(user_information_table, input_username):
-    #     print(f"\nUser with username '{input_username}' already exists in the database.")
-    #     return 2
+    input_password = input("\nPassword:\nEnter Here:")
 
-    # # Validate - Input Savings is an Int
-    # if not isinstance(input_savings, int):
-    #     print("Error: 'savings' must be an integer.")
-    #     return 2
-
-    # # Generate Unique Id
-    # unique_id = generate_unique_id()
-
-    # # Create a user document
-    # new_user = {
-    #     '_id': unique_id,
-    #     'name': input_username,
-    #     'password': input_password,
-    #     'savings': input_savings
-    # }
-
-    # # Try - Add user to MongoDB
-    # try:
-    #     return_id = user_information_table.insert_one(new_user)
-    #     if return_id == unique_id:
-    #         print("User added correctly!")
-    #     else:
-    #         print("User NOT added: errorr")
-    # except DuplicateKeyError as e:
-    #     print(f"Error: {e}")
-    #     return 2
-
-    return 1
+    if verify_password(username, input_password, user_salt) == True:
+        print("Successfully Logged In\n")
+        return True
+    else:
+        print("Incorrect Username or Password\n")
+        return False
+    
 
 # Function to remove a user based on username
 def remove_user():
-
     input_username = input("\nUsername:\nEnter Here: ")
-
     result = user_information_table.delete_one({'username': input_username})
+    
     if result.deleted_count > 0:
         print(f"User {input_username} successfully removed.")
     else:
         print(f"User {input_username} not found.")
 
 def pull_user_data():
-
     input_username = input("\nUsername:\nEnter Here: ")
 
     # Query the database for all users with the given username
     user_documents = user_information_table.find({'username': input_username}, {'_id': 0})
 
-
     for user_document in user_documents:
             print("User Information:", user_document)
-        
     return 
 
 
+# simple send money function
+def send_money_to_user():
+    return
 
-# Hello! This is the main code for the Client
-# This section of the Banking Application will be in charge of:
-#   - Starting communications to the Bank Server
-#       - Diffie-Hellman exchange --> Shared_secret
-#       - IV Generator            --> For Modes Encryption/Decryption
+# probably will need to be some sort of json object, with an amount requested and username from
+# each user can have a list of reqests and "finished them" in order
+def request_money_from_user():
+    return
 
-#   - Providing a Client UI
-#       - Option for viewing Bank information, Adding functions, Taking out Funds, sending Funds to Friend
 
 if __name__ == '__main__':
 
@@ -360,6 +311,7 @@ if __name__ == '__main__':
         print("2 - Add/Remove funds to an account!")
         print("3 - Remove User")
         print("4 - Retrieve all user Data")
+        print("5 - Send Funds to another user")
         user_input = input("Exit - Exit the application\n\nEnter Here: ")
 
         if user_input == "1":
@@ -376,6 +328,9 @@ if __name__ == '__main__':
 
         elif user_input == "4":
             pull_user_data()
+        
+        elif user_input == "5":
+            send_money_to_user()
 
         elif user_input == "Exit":
             print("Exiting Mongo Python Tester - Thanks for playing!\n")
