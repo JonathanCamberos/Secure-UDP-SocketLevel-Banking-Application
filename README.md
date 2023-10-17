@@ -31,3 +31,9 @@ To run the Server/Client, run 1. in the first terminal, run 2. in the second ter
 
 The result should be the Client talks to the Server, they exchange a secret key via diffie-hellmen, <br />
 and the client sends an ecrypted message using AES and HMAC and the server Decrypts the message and verifies the HMAC <br />
+
+To Test the MongoDB Python functions / UI, run 1. in a terminal <br />
+
+  1. 'python3 mongo.py'
+
+
