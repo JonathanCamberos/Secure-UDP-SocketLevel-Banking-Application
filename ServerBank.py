@@ -3,13 +3,22 @@ import select
 import sys
 import argparse
 import struct
+import pymongo 
+
+from pymongo.errors import DuplicateKeyError
+from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
+
 
 from Headers import TEST_HEADER
 from Headers import KEEP_ALIVE
 
+from Headers import DISCONNECT_CLIENT
+
 from Headers import LOGIN_REQUEST_HEADER 
 from Headers import STATUS_REQUEST_HEADER
 from Headers import TRANSFER_REQUEST_HEADER
+from Headers import MODIFY_SAVINGS_HEADER
 
 from Headers import LOGIN_SUCCESS_HEADER
 from Headers import STATUS_SUCCESS_HEADER 
@@ -35,15 +44,239 @@ from util import recieve_public_key
 from util import print_package_encrypted_testing
 from util import print_unpackage_encrypted_packaged_testing
 
+from ServerMessages import send_login_success_response
+
+
+
 client_state_list = []
 
+conn_str = "mongodb+srv://jcambero:jcambero@cluster0.nkjnjyb.mongodb.net/"
+bank_database = ''
+user_information_table = ''
+
+
+###################################################################################################
+###################################################################################################
+###################################################################################################
+###################################################################################################
+
+# Database Section
+
+
+def convert_to_integer(s):
+    try:
+        return int(s)
+    except ValueError:
+        print(f"Error: Unable to convert '{s}' to an integer.")
+        return None
+
+def get_savings(username):
+    user_data = user_information_table.find_one({'username': username})
+    if user_data:
+
+        raw_user_savings = user_data.get('savings', '')
+        int_user_savings = convert_to_integer(raw_user_savings)
+        print(f"Grabbed Raw Savings: {raw_user_savings}")
+        print(f"translated to Int Savings: {int_user_savings}")
+        
+        return int_user_savings
+    return None
+
+def verify_transaction(username, type, amount):
+
+    if type == 1:
+        return True
+    elif type == 2:
+        current_savings = get_savings(username)
+        res = current_savings - amount
+        if res >= 0:
+            return True
+        else:
+            False
+    else:
+        print("bad transaction type")
+        return
+
+
+# Function to update user's savings based on the username
+def update_savings(username, new_savings):
+    result = user_information_table.update_one({'username': username}, {'$set': {'savings': new_savings}})
+    if result.modified_count > 0:
+        print(f"Savings for {username} updated to {new_savings}")
+    else:
+        print(f"User {username} not found.")
+
+
+def proceed_transation(username, type, transaction_amount):
+
+    current_savings = ''
+    new_savings = ''
+
+    if type == 1:
+        current_savings = get_savings(username)
+        new_savings = current_savings + transaction_amount
+        update_savings(username, new_savings)
+
+        return True
+    
+    elif type == 2:
+        current_savings = get_savings(username)
+        new_savings = current_savings - transaction_amount
+        update_savings(username, new_savings)
+
+        return True
+    else:
+        print("bad transaction type")
+        return
+
+
+def verified_modification_user(mode, transaction_amount, username, password):
+    
+    print(f"Welcome: {username}")
+
+    if mode == "1":
+       
+        # checks if enough funds for transaction
+        if verify_transaction(username, 1, transaction_amount):
+
+            print(f"Adding {transaction_amount} is possible")
+            print(f"Proceeding!")
+            proceed_transation(username, 1, transaction_amount)
+        
+        else:
+            print(f"Adding {transaction_amount} is not possible")
+            print(f"Have a good day!\n")
+    
+    elif mode == "2":
+        transaction_amount = input("Enter Amount to Subtract from Account\n\nEnter Here: ")            
+        transaction_amount = convert_to_integer(transaction_amount)
+
+        if transaction_amount == None:
+            print("Error: 'savings' must be an integer.")
+            return
+
+        if verify_transaction(username, 2, transaction_amount):
+            print(f"Subtracting {transaction_amount} is possible")
+            print(f"Proceeding!")
+            proceed_transation(username, 2, transaction_amount)
+
+        else:
+            print(f"Subtracting {transaction_amount} is not possible")
+            print(f"Have a good day!\n")
+
+    else:
+        print("Invalid modifcation mode")
+        return
+
+
+    return
+
+
+
+
+
+# def pull_user_data(username):
+def pull_user_data(username):
+
+    # input_username = input("\nUsername:\nEnter Here: ")
+    
+    # Query the database for all users with the given username
+    user_documents = user_information_table.find({'username': username}, {'_id': 0})
+
+    for user_document in user_documents:
+            print("User Information:", user_document)
+    return 
+
+
+
+# def hash_password(password, salt):
+def hash_password(password, salt):
+    kdf = PBKDF2HMAC(
+        algorithm=hashes.SHA256(),
+        salt=salt,
+        iterations=100000,  # Choose an appropriate number of iterations
+        length=32  # Length of the derived key
+    )
+    hashed_password = kdf.derive(password.encode('utf-8'))
+    return hashed_password
+
+def get_hashed_password(username):
+    user_data = user_information_table.find_one({'username': username})
+    if user_data:
+        return user_data.get('hashed password', '')
+    return None
+
+def get_salt(username):
+    user_data = user_information_table.find_one({'username': username})
+    if user_data:
+        return user_data.get('salt', '')
+    return None
+
+def verify_password(username, entered_password, salt):
+    # Hash the entered password with the stored salt
+    stored_hashed_password = get_hashed_password(username)
+    entered_password_hashed = hash_password(entered_password, salt)
+
+
+    print(f"Stored Hashed Password: {stored_hashed_password}\n")
+    print(f"Input password: {entered_password}")
+    print(f"Calculated Hashed Password: {entered_password_hashed}")
+
+    # Compare the entered password hash with the stored hash
+    return entered_password_hashed == stored_hashed_password
+
+def login_verification(username, password):
+    
+    user_salt = get_salt(username)
+
+    print(f"\nUser {username} has salt: {user_salt}\n")
+
+    # input_password = input("\nPassword:\nEnter Here:")
+
+    if verify_password(username, password, user_salt) == True:
+        print("Successfully Logged In\n")
+        return True
+    else:
+        print("Incorrect Username or Password\n")
+        return False
+    
+
+
+# Database Section
+###################################################################################################
+###################################################################################################
+###################################################################################################
+###################################################################################################
+
+def user_logged_in_status(client_we_are_serving):
+    
+    if client_we_are_serving.client_logged_in == 1:
+        return True
+    else:
+        return False
 
 
 def validate_peer_list():
+
     global client_state_list
     new_clientlist = []
     for c in client_state_list:
-        new_clientlist.append(c)
+        check = 1
+        curr_time = datetime.now()
+        #Check that client has sent a message in the past two minutes and that
+        #it has not closed the socket
+        # if (curr_time - c.peer_last_message_time).total_seconds() <= 120 (c.sock.fileno != -1):
+
+        if (curr_time - c.peer_last_message_time).total_seconds() > 10:
+            print("Ya out of time bucko")
+            check = 0
+
+        if c.sock.fileno == -1:
+            print("Client forced disconeect")
+            check = 0
+
+        if check == 1:
+            new_clientlist.append(c)
     
     client_state_list = new_clientlist
 
@@ -111,6 +344,10 @@ def get_packet_data(r):
 
     print(f"Data: {data}")
 
+    return data
+
+
+
 
 # Hello! This is the main code for the Bank Server
 # This section of the Banking Application will be in charge of:
@@ -125,6 +362,22 @@ def get_packet_data(r):
 #   - Verifying with Certificate Server (TO-DO)
 #       - 
 if __name__ == '__main__':
+
+    print("Setting Up Database")
+
+    try:
+        client = pymongo.MongoClient(conn_str)
+
+    except Exception:
+        print("Error: " + Exception)
+
+    bank_database = client["bank_of_america_database"]
+    user_information_table = bank_database["user_information"]
+ 
+    print("Mongo python database Setup!")
+
+    # pull_user_data("user")
+    pull_user_data("user")
 
     # 0.0 - Generating Parameters for Diffie–Hellman exchange via
     #        private/public key strategy
@@ -204,6 +457,9 @@ if __name__ == '__main__':
         #2.3 - Check Keep Alive Messages For Each Client (TO-DO)
         validate_peer_list()
 
+        #print Test
+        print(f"Client List: {client_state_list}")
+
         #2.4 - For Each Client
         #           - Add Client's Read Socket to rlist (Read List)
         for c in client_state_list:
@@ -230,6 +486,7 @@ if __name__ == '__main__':
         #                             select will return.
         rfds, wfds, xfds = select.select(rlist, wlist, xlist, 5)
 
+
         #2.8 - Check Read File Descriptors 
         if rfds != []:
 
@@ -249,7 +506,8 @@ if __name__ == '__main__':
 
                 packet_header = r.recv(1)
                 print(f"Message: {packet_header}")
-                
+                if len(packet_header) == 0:  # end of the file
+                    continue
                 # if len(packet_header) == 0:  # end of the file
                 #     print("Something b r o k e")
                 #     continue
@@ -296,10 +554,69 @@ if __name__ == '__main__':
 
                         print("Recieved Packet Type LOGIN")
                         # Call Get Packet Data for as many parameters the header requires
-                        info_one = get_packet_data(r)
-                        info_two = get_packet_data(r)
-                        exit(1)
+                        username = get_packet_data(r)
+                        password = get_packet_data(r)
+
+                        print(f"Username: {username}")
+                        print(f"Password: {password}")
+
+                        username = username.decode('utf-8')
+                        password = password.decode('utf-8')
+
+                        print(f"Decoded Username: {username}")
+                        print(f"Decoded Password: {password}")
+
+                        if login_verification(username, password) == True:
+                            print("Logged In!!")
+
+                            client_we_are_serving.client_logged_in = 1
+                            client_we_are_serving.holder_username = username
+                            client_we_are_serving.holder_password = password
+
+                            print(f"Client Status username {client_we_are_serving.holder_username}")
+                            print(f"Client Status password {client_we_are_serving.holder_password}")
+
+                            send_login_success_response(r)
+                            
+
+                        else:
+                            print("Ya fucked up kid")
+
+                    elif packet_header == MODIFY_SAVINGS_HEADER:
+
+                        print("Recieved Packet Type MODIFY")
+                        # Call Get Packet Data for as many parameters the header requires
+                        add_sub = get_packet_data(r)
+                        amount = get_packet_data(r)
+
+                        add_sub = add_sub.decode('utf-8')
+
+                        if user_logged_in_status(client_we_are_serving):
+                            print("User is logged in, proceed!")
+                        else:
+                            print("NOT LOGGED IN ")
+                            continue
+
+                        print(f"Add or Sub: {add_sub}")
+                        print(f"Amount: {amount}")
+                        print(f"Username: {client_we_are_serving.holder_username}")
+                        print(f"Password: {client_we_are_serving.holder_password}")
+
+                        amount = convert_to_integer(amount)
+
+                        print(f"type of amount {amount} is {type(amount)}")
+                        print(f"type of amount {amount} is {type(amount)}")
+
+                        verified_modification_user(add_sub, amount, client_we_are_serving.holder_username, client_we_are_serving.holder_password)
+
+                    elif packet_header == DISCONNECT_CLIENT:
+                        print("Disconnected")
+                        
                     else:
                         print("none packet header")
+
+
+
+
 
 

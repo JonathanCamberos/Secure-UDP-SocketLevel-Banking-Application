@@ -18,6 +18,9 @@ from ClientMessages import prepare_HandShake_Message
 from ClientMessages import send_hello_message
 
 from ClientMessages import send_login_request
+from ClientMessages import recv_login_response
+
+from ClientMessages import send_modify_savings_request
 
 p = 0xFFFFFFFFFFFFFFFFC90FDAA22168C234C4C6628B80DC1CD129024E088A67CC74020BBEA63B139B22514A08798E3404DDEF9519B3CD3A431B302B0A6DF25F14374FE1356D6D51C245E485B576625E7EC6F44C42E9A637ED6B0BFF5CB6F406B7EDEE386BFB5A899FA5AE9F24117C4B1FE649286651ECE45B3DC2007CB8A163BF0598DA48361C55D39A69163FA8FD24CF5F83655D23DCA3AD961C62F356208552BB9ED529077096966D670C354E4ABC9804F1746C08CA18217C32905E462E36CE3BE39E772C180E86039B2783A2EC07A28FB5C55DF06F4C52C9DE2BCBF6955817183995497CEA956AE515D2261898FA051015728E5A8AACAA68FFFFFFFFFFFFFFFF
 g = 2   
@@ -170,7 +173,6 @@ if __name__ == '__main__':
 
             send_hello_message(server_peer.sock)
 
-
             # message = prepare_Hello_Message()
             # packaged_message = package_message(message, shared_key, iv)
 
@@ -181,9 +183,27 @@ if __name__ == '__main__':
             input_password = input("\nPassword:\nEnter Here:")
 
             send_login_request(input_username, input_password, server_peer.sock)
+            res = recv_login_response(server_peer.sock)
 
-            print("sent!")
-            exit(1)
+            if res == True:
+
+                
+                print("You have logged in!! Welcome:")
+                loop2 = True
+                while loop2:
+                    print("\nWhat would you like to do?")
+                    print("Enter one of the following options:")
+                    print("1 - Add/Remove funds from your account!")
+                    print("2 - View Funds in your account!")
+                    user_input2 = input("3 Exit the application\n\nEnter Here: ")
+            
+                    if user_input2 == "1":
+
+                       send_modify_savings_request(server_peer.sock) 
+            else: 
+                print("Err on Loginnn")
+                    
+            
         elif user_input == "3":
             print("Thanks for playing!\n")
             loop = False

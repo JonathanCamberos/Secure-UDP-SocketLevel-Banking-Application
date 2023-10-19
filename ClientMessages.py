@@ -6,6 +6,8 @@ from Headers import LOGIN_REQUEST_HEADER
 from Headers import STATUS_REQUEST_HEADER
 from Headers import TRANSFER_REQUEST_HEADER
 
+from Headers import MODIFY_SAVINGS_HEADER
+
 from Headers import LOGIN_SUCCESS_HEADER
 from Headers import STATUS_SUCCESS_HEADER 
 from Headers import TRANSFER_SUCCESS_HEADER 
@@ -13,6 +15,9 @@ from Headers import GENERIC_ERROR_HEADER
 from Headers import LOGIN_ERROR_HEADER
 from Headers import TRANSFER_ERROR_NOTARGET_HEADER
 from Headers import TRANSFER_ERROR_NOMONEY_HEADER 
+
+from BothMessages import send_package
+from BothMessages import package_single_data
 
 
 # alternativa de rror
@@ -114,27 +119,6 @@ def send_hello_message(server_sock):
     
     return
 
-def package_single_data(data):
-
-    data = data.encode('utf-8')
-
-    length = len(data).to_bytes(4, "big")
-    message = b"".join([length, data])       
-
-    return message
-
-def send_package(package, server_sock):
-
-    res = server_sock.sendall(package)
-
-    if res == None:
-        print(f"Sent: {len(package)}")
-        print("Entire Package Sent: Success!")
-        print(f"Package: {package}\n")
-    else:
-        print("\nPartial Package Sent: Error!\n")
-    
-    return
 
 def send_login_request(username, password, server_sock):
 
@@ -146,6 +130,40 @@ def send_login_request(username, password, server_sock):
     message = b"".join([header, username_package, password_package])
 
     send_package(message, server_sock)
+    return
+
+def recv_login_response(server_sock):
+
+    data = server_sock.recv(1)
+
+    if data == LOGIN_SUCCESS_HEADER:
+        print("LOGGED IN!")
+        return True
+
+    elif data == LOGIN_ERROR_HEADER:
+        print("Err on login")
+        return False
+    else:
+        print("Invalid repsonse")
+        return False
+
+
+def send_modify_savings_request(server_sock):
+    
+    print("1 - Add")
+    print("2 - Subtract")
+    add_sub = input("\nEnter Here: ")
+    amount = input("\Amount:\nEnter Here:")
+
+    header = MODIFY_SAVINGS_HEADER
+
+    add_sub_package = package_single_data(add_sub)
+    amount_package = package_single_data(amount)
+
+    message = b"".join([header, add_sub_package, amount_package])
+
+    send_package(message, server_sock)
+
     return
 
 

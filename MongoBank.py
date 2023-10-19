@@ -8,20 +8,11 @@ from pymongo.errors import DuplicateKeyError
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 
-conn_str = "mongodb+srv://jcambero:jcambero@cluster0.nkjnjyb.mongodb.net/"
-bank_database = ''
-user_information_table = ''
-
-
 
 # HEllooooo
 # this is mainly for manual testing of the database
 # the actual file we will use will be
 # DatabaseBank.py
-
-
-
-
 
 
 # def hash_password(password, salt):
@@ -183,6 +174,7 @@ def proceed_transation(username, type, transaction_amount):
 def verified_modification_user(username):
     
     print(f"Welcome: {username}")
+    
 
     loop = True
     while loop:
@@ -251,15 +243,15 @@ def modify_user_savings():
     else:
         return
 
-def login_verification(username):
+def login_verification(username, password):
     
     user_salt = get_salt(username)
 
     print(f"\nUser {username} has salt: {user_salt}\n")
 
-    input_password = input("\nPassword:\nEnter Here:")
+    # input_password = input("\nPassword:\nEnter Here:")
 
-    if verify_password(username, input_password, user_salt) == True:
+    if verify_password(username, password, user_salt) == True:
         print("Successfully Logged In\n")
         return True
     else:
@@ -277,11 +269,13 @@ def remove_user():
     else:
         print(f"User {input_username} not found.")
 
-def pull_user_data():
-    input_username = input("\nUsername:\nEnter Here: ")
+# def pull_user_data(username):
+def pull_user_data(user_information_table, username):
 
+    # input_username = input("\nUsername:\nEnter Here: ")
+    
     # Query the database for all users with the given username
-    user_documents = user_information_table.find({'username': input_username}, {'_id': 0})
+    user_documents = user_information_table.find({'username': username}, {'_id': 0})
 
     for user_document in user_documents:
             print("User Information:", user_document)
@@ -298,56 +292,57 @@ def request_money_from_user():
     return
 
 
-if __name__ == '__main__':
 
-    print("Setting Up Database")
+# if __name__ == '__main__':
 
-    try:
-        client = pymongo.MongoClient(conn_str)
+#     print("Setting Up Database")
 
-    except Exception:
-        print("Error: " + Exception)
+#     try:
+#         client = pymongo.MongoClient(conn_str)
 
-    bank_database = client["bank_of_america_database"]
-    user_information_table = bank_database["user_information"]
+#     except Exception:
+#         print("Error: " + Exception)
 
-    print("Welcome to the mongo python database tester!")
+#     bank_database = client["bank_of_america_database"]
+#     user_information_table = bank_database["user_information"]
+
+#     print("Welcome to the mongo python database tester!")
    
-    loop = True
-    while loop:
-        print("\nWhat would you like to do?")
-        print("Enter one of the following options:")
-        print("1 - Add a user!")
-        print("2 - Add/Remove funds to an account!")
-        print("3 - Remove User")
-        print("4 - Retrieve all user Data")
-        print("5 - Send Funds to another user")
-        user_input = input("Exit - Exit the application\n\nEnter Here: ")
+#     loop = True
+#     while loop:
+#         print("\nWhat would you like to do?")
+#         print("Enter one of the following options:")
+#         print("1 - Add a user!")
+#         print("2 - Add/Remove funds to an account!")
+#         print("3 - Remove User")
+#         print("4 - Retrieve all user Data")
+#         print("5 - Send Funds to another user")
+#         user_input = input("Exit - Exit the application\n\nEnter Here: ")
 
-        if user_input == "1":
-            if add_user_to_database() == 1:
-                print("User Added Successfully!")
-            else:
-                print("Err: User not added!")
+#         if user_input == "1":
+#             if add_user_to_database() == 1:
+#                 print("User Added Successfully!")
+#             else:
+#                 print("Err: User not added!")
 
-        elif user_input == "2":
-            modify_user_savings()
+#         elif user_input == "2":
+#             modify_user_savings()
 
-        elif user_input == "3":
-            remove_user()
+#         elif user_input == "3":
+#             remove_user()
 
-        elif user_input == "4":
-            pull_user_data()
+#         elif user_input == "4":
+#             pull_user_data()
         
-        elif user_input == "5":
-            send_money_to_user()
+#         elif user_input == "5":
+#             send_money_to_user()
 
-        elif user_input == "Exit":
-            print("Exiting Mongo Python Tester - Thanks for playing!\n")
-            loop = False
+#         elif user_input == "Exit":
+#             print("Exiting Mongo Python Tester - Thanks for playing!\n")
+#             loop = False
             
-        else:
-            user_input = input("Incorrect Input, try again\n")
+#         else:
+#             user_input = input("Incorrect Input, try again\n")
     
-    print("Thats all folks! :)")    
+#     print("Thats all folks! :)")    
 
