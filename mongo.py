@@ -241,10 +241,24 @@ def verified_modification_user(username):
 
     return
 
+
+def check_user_exists(username):
+
+    # Query the database to check if the user exists
+    user = user_information_table.find_one({"username": username})
+
+    return user is not None
+
+
 def modify_user_savings():
 
     print("Please Login:\n")
     input_username = input("\nUsername:\nEnter Here: ")
+    res = check_user_exists(input_username)
+    if check_user_exists(input_username) == False:
+        print("User does not exists")
+        return
+
 
     if login_verification(input_username) == True:
         verified_modification_user(input_username)

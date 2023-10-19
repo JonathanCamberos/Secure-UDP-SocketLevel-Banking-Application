@@ -5,6 +5,15 @@ from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes, hmac
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 
+def convert_to_integer(s):
+    try:
+        return int(s)
+    except ValueError:
+        print(f"Error: Unable to convert '{s}' to an integer.")
+        return None
+    
+
+
 def int_to_bytes(number, byteorder='big'):
     if not isinstance(number, int):
         raise TypeError("Input must be an integer")

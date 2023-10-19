@@ -18,7 +18,12 @@ from Headers import DISCONNECT_CLIENT
 from Headers import LOGIN_REQUEST_HEADER 
 from Headers import STATUS_REQUEST_HEADER
 from Headers import TRANSFER_REQUEST_HEADER
+
 from Headers import MODIFY_SAVINGS_HEADER
+from Headers import MODIFY_SAVINGS_SUCCESS_HEADER
+
+from Headers import VIEW_SAVINGS_REQUEST_HEADER
+from Headers import VIEW_SAVINGS_SUCCESS_RESPONSE
 
 from Headers import LOGIN_SUCCESS_HEADER
 from Headers import STATUS_SUCCESS_HEADER 
@@ -44,9 +49,15 @@ from util import recieve_public_key
 from util import print_package_encrypted_testing
 from util import print_unpackage_encrypted_packaged_testing
 
+from util import convert_to_integer
+
 from ServerMessages import send_login_success_response
+from ServerMessages import send_login_error_response
 
+from ServerMessages import send_modify_savings_success_response
+from ServerMessages import send_view_savings_success_response
 
+from BothMessages import get_packet_data
 
 client_state_list = []
 
@@ -62,13 +73,6 @@ user_information_table = ''
 
 # Database Section
 
-
-def convert_to_integer(s):
-    try:
-        return int(s)
-    except ValueError:
-        print(f"Error: Unable to convert '{s}' to an integer.")
-        return None
 
 def get_savings(username):
     user_data = user_information_table.find_one({'username': username})
@@ -141,24 +145,24 @@ def verified_modification_user(mode, transaction_amount, username, password):
 
             print(f"Adding {transaction_amount} is possible")
             print(f"Proceeding!")
-            proceed_transation(username, 1, transaction_amount)
+            if proceed_transation(username, 1, transaction_amount) == True:
+                print("Success in Adding!")
+                return True
         
         else:
             print(f"Adding {transaction_amount} is not possible")
             print(f"Have a good day!\n")
     
-    elif mode == "2":
-        transaction_amount = input("Enter Amount to Subtract from Account\n\nEnter Here: ")            
-        transaction_amount = convert_to_integer(transaction_amount)
-
-        if transaction_amount == None:
-            print("Error: 'savings' must be an integer.")
-            return
+    elif mode == "2":   
+             
 
         if verify_transaction(username, 2, transaction_amount):
             print(f"Subtracting {transaction_amount} is possible")
             print(f"Proceeding!")
-            proceed_transation(username, 2, transaction_amount)
+            if proceed_transation(username, 2, transaction_amount) == True:
+                print("Success In Adding!")
+                return True
+        
 
         else:
             print(f"Subtracting {transaction_amount} is not possible")
@@ -166,10 +170,10 @@ def verified_modification_user(mode, transaction_amount, username, password):
 
     else:
         print("Invalid modifcation mode")
-        return
+        return False
 
 
-    return
+    return False
 
 
 
@@ -225,8 +229,21 @@ def verify_password(username, entered_password, salt):
     # Compare the entered password hash with the stored hash
     return entered_password_hashed == stored_hashed_password
 
+def check_user_exists(username):
+
+    # Query the database to check if the user exists
+    user = user_information_table.find_one({"username": username})
+
+    return user is not None
+
+
 def login_verification(username, password):
     
+    if check_user_exists(username) != True:
+        print("User does not exist")
+        return False
+
+
     user_salt = get_salt(username)
 
     print(f"\nUser {username} has salt: {user_salt}\n")
@@ -318,12 +335,8 @@ def recv_handshake_from_initiator(server_socket: socket, server_private_key, ser
     # Recv message from client
     recv_encrypted_handshake_message = recieve_package(peer_sock)
 
-
-
     # Unpackage/Decrypt message from client
     unpackaged_message = unpackage_message(recv_encrypted_handshake_message, shared_key, iv)
-    
-
 
     print("Handshake Success!\n")
 
@@ -333,18 +346,7 @@ def recv_handshake_from_initiator(server_socket: socket, server_private_key, ser
     return True
 
 
-def get_packet_data(r):
-    data_len = r.recv(4)
-   
-    data_len = struct.unpack("!I", data_len)
-    data_len = data_len[0]
-    print(f"Length of Curr Data: {data_len}")
 
-    data = r.recv(data_len)
-
-    print(f"Data: {data}")
-
-    return data
 
 
 
@@ -581,6 +583,7 @@ if __name__ == '__main__':
 
                         else:
                             print("Ya fucked up kid")
+                            send_login_error_response(r)
 
                     elif packet_header == MODIFY_SAVINGS_HEADER:
 
@@ -607,7 +610,23 @@ if __name__ == '__main__':
                         print(f"type of amount {amount} is {type(amount)}")
                         print(f"type of amount {amount} is {type(amount)}")
 
-                        verified_modification_user(add_sub, amount, client_we_are_serving.holder_username, client_we_are_serving.holder_password)
+                        res2= verified_modification_user(add_sub, amount, client_we_are_serving.holder_username, client_we_are_serving.holder_password)
+
+                        if res2 == True:
+                            send_modify_savings_success_response(r)
+
+                    elif packet_header == VIEW_SAVINGS_REQUEST_HEADER:
+                        
+                        print("Recieved Packet Type VIEW SAVINGS")
+                        # Call Get Packet Data for as many parameters the header requires
+                        
+                        username = client_we_are_serving.holder_username
+                        print(f"View User {username}")
+
+                        savings = str(get_savings(username))
+
+                        send_view_savings_success_response(savings, r)
+                        
 
                     elif packet_header == DISCONNECT_CLIENT:
                         print("Disconnected")

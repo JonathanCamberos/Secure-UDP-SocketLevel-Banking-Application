@@ -1,3 +1,7 @@
+import struct
+
+
+
 def package_single_data(data):
 
     data = data.encode('utf-8')
@@ -19,3 +23,17 @@ def send_package(package, server_sock):
         print("\nPartial Package Sent: Error!\n")
     
     return
+
+def get_packet_data(r):
+
+    data_len = r.recv(4)
+   
+    data_len = struct.unpack("!I", data_len)
+    data_len = data_len[0]
+    print(f"Length of Curr Data: {data_len}")
+
+    data = r.recv(data_len)
+
+    print(f"Data: {data}")
+
+    return data
