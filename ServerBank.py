@@ -2,6 +2,22 @@ import socket
 import select
 import sys
 import argparse
+import struct
+
+from Headers import TEST_HEADER
+from Headers import KEEP_ALIVE
+
+from Headers import LOGIN_REQUEST_HEADER 
+from Headers import STATUS_REQUEST_HEADER
+from Headers import TRANSFER_REQUEST_HEADER
+
+from Headers import LOGIN_SUCCESS_HEADER
+from Headers import STATUS_SUCCESS_HEADER 
+from Headers import TRANSFER_SUCCESS_HEADER 
+from Headers import GENERIC_ERROR_HEADER 
+from Headers import LOGIN_ERROR_HEADER
+from Headers import TRANSFER_ERROR_NOTARGET_HEADER
+from Headers import TRANSFER_ERROR_NOMONEY_HEADER 
 
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives.asymmetric import dh
@@ -21,6 +37,17 @@ from util import print_unpackage_encrypted_packaged_testing
 
 client_state_list = []
 
+
+
+def validate_peer_list():
+    global client_state_list
+    new_clientlist = []
+    for c in client_state_list:
+        new_clientlist.append(c)
+    
+    client_state_list = new_clientlist
+
+    return
 
 def recv_handshake_from_initiator(server_socket: socket, server_private_key, server_public_key):
     """
@@ -67,7 +94,22 @@ def recv_handshake_from_initiator(server_socket: socket, server_private_key, ser
 
     print("Handshake Success!\n")
 
+    #send_test edit
+    client_state_list.append(new_peer)
+
     return True
+
+
+def get_packet_data(r):
+    data_len = r.recv(4)
+   
+    data_len = struct.unpack("!I", data_len)
+    data_len = data_len[0]
+    print(f"Length of Curr Data: {data_len}")
+
+    data = r.recv(data_len)
+
+    print(f"Data: {data}")
 
 
 # Hello! This is the main code for the Bank Server
@@ -148,6 +190,10 @@ if __name__ == '__main__':
     rlist, wlist, xlist = [], [], []
     socket_error = False
 
+
+    print("Before Entering While loop -")
+    print(f"Client State List: {client_state_list}")
+
     #2.1 - Infinite Loop to Keep Server Constantly listening for Client Information
     while True:
         
@@ -156,7 +202,7 @@ if __name__ == '__main__':
         rlist = []
 
         #2.3 - Check Keep Alive Messages For Each Client (TO-DO)
-        # validate_peer_list()
+        validate_peer_list()
 
         #2.4 - For Each Client
         #           - Add Client's Read Socket to rlist (Read List)
@@ -186,41 +232,74 @@ if __name__ == '__main__':
 
         #2.8 - Check Read File Descriptors 
         if rfds != []:
+
+            print("File descriptors not empty!")
+
             for r in rfds:
                 if (r.fileno == -1):
+                    print("Error -1")
                     continue
 
                 if (r == server_socket):
-
+                    print("Handshake one")
                     recv_handshake_from_initiator(server_socket, server_private_key, server_public_key)
                     continue
         
+                print("Reiceving on some peer")
+
+                packet_header = r.recv(1)
+                print(f"Message: {packet_header}")
+                
+                # if len(packet_header) == 0:  # end of the file
+                #     print("Something b r o k e")
+                #     continue
+                
+                # headers work directly with bytes
+                # packet_header = struct.unpack("!I", packet_header)
+                # packet_header = packet_header[0]
+                # print("Length:", packet_header)
 
 
-    # # Get the current time
-    # start_time = time.time()
-    # duration = 2
-    # while True:
-    #     # Get the current time in the loop
-    #     current_time = time.time()
+                if (packet_header == KEEP_ALIVE): #Keep Alive Message
+                    print("Keep Alive Message")
+                    serving_peer_host, serving_peer_port = r.getpeername()
+                    for k in client_state_list:
+                        if k.peer_ip_addr == serving_peer_host and k.peer_port == serving_peer_port:
+                            k.peer_last_message_time = datetime.now()
 
-    #     # Calculate the elapsed time
-    #     elapsed_time = current_time - start_time
+                else:
+                    print("Non Keep Alive Message")
+                    serving_peer_host, serving_peer_port = r.getpeername()
+                    print(f"Serving Peer: {serving_peer_host}")
+                    print(f"Serving Port: {serving_peer_port}")
 
-    #     # Check if the elapsed time has reached the desired duration
-    #     if elapsed_time >= duration:
-    #         #alive timer, just prints out for sanity :) 
-    #         duration = 2
-    #         start_time = time.time()
-    #         print("server is alive**************************")
+                    print(f"Client State List: {client_state_list}")
 
+                    for k in client_state_list:
+                        print(f"Client: {k.peer_ip_addr} and {k.peer_port}")
+                        # if k.peer_ip_addr == serving_peer_host and k.peer_port == serving_peer_port:
+                        #     client_we_are_serving = k
+                        if k.peer_port == serving_peer_port:
+                             client_we_are_serving = k
 
-    #     # Print the remaining time (optional)
-    #     # remaining_time = duration - elapsed_time
-    #     # print(f"Time remaining: {round(remaining_time, 2)} seconds")
+                    print(f"Client we are serving: {client_we_are_serving}")
+                    client_we_are_serving.peer_last_message_time = datetime.now()
 
-    #     # Add a small delay to avoid high CPU usage
-    #     # time.sleep(0.1)
+                    if packet_header == TEST_HEADER:
 
-    # print("Timer complete!")
+                        print("Recieved Packet Type TEST")
+                        
+                        # Call Get Packet Data for as many parameters the header requires
+                        info_one = get_packet_data(r)
+
+                    elif packet_header == LOGIN_REQUEST_HEADER:
+
+                        print("Recieved Packet Type LOGIN")
+                        # Call Get Packet Data for as many parameters the header requires
+                        info_one = get_packet_data(r)
+                        info_two = get_packet_data(r)
+                        exit(1)
+                    else:
+                        print("none packet header")
+
 

@@ -13,6 +13,17 @@ bank_database = ''
 user_information_table = ''
 
 
+
+# HEllooooo
+# this is mainly for manual testing of the database
+# the actual file we will use will be
+# DatabaseBank.py
+
+
+
+
+
+
 # def hash_password(password, salt):
 def hash_password(password, salt):
     kdf = PBKDF2HMAC(

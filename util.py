@@ -5,6 +5,17 @@ from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes, hmac
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 
+def int_to_bytes(number, byteorder='big'):
+    if not isinstance(number, int):
+        raise TypeError("Input must be an integer")
+
+    # Calculate the number of bytes needed
+    byte_length = max(1, (number.bit_length() + 7) // 8)
+
+    # Convert the integer to bytes
+    return number.to_bytes(byte_length, 'big')
+
+
 def generate_hmac(message, key):
     h = hmac.HMAC(key, hashes.SHA256(), backend=default_backend())
     h.update(message)
