@@ -1,11 +1,5 @@
-import struct
-
-from Headers import TEST_HEADER
-
 
 from Headers import LOGIN_REQUEST_HEADER 
-from Headers import STATUS_REQUEST_HEADER
-from Headers import TRANSFER_REQUEST_HEADER
 
 from Headers import MODIFY_SAVINGS_HEADER
 from Headers import MODIFY_SAVINGS_SUCCESS_HEADER
@@ -15,27 +9,16 @@ from Headers import VIEW_SAVINGS_REQUEST_HEADER
 from Headers import VIEW_SAVINGS_SUCCESS_RESPONSE
 
 from Headers import LOGIN_SUCCESS_HEADER
-from Headers import STATUS_SUCCESS_HEADER 
-from Headers import TRANSFER_SUCCESS_HEADER 
-from Headers import GENERIC_ERROR_HEADER 
 from Headers import LOGIN_ERROR_HEADER
-from Headers import TRANSFER_ERROR_NOTARGET_HEADER
-from Headers import TRANSFER_ERROR_NOMONEY_HEADER 
+
+from Headers import NEW_USER_REQUEST_HEADER
+from Headers import NEW_USER_SUCCESS_RESPONSE
+from Headers import NEW_USER_NAME_TAKEN_ERROR_RESPONSE
 
 from BothMessages import send_package
 from BothMessages import package_single_data
 from BothMessages import get_packet_data
 
-from util import convert_to_integer
-
-
-
-# alternativa de rror
-#    pstrlen = ERROR_HEADER
-#    pstr = error_message.encode('utf-8')
-#    reserved = b"\x00\x00\x00\x00\x00\x00\x00\x00"
-#
-# se dan los detalles del error en error_message
 
 
 def prepare_HandShake_Message():
@@ -47,6 +30,36 @@ def prepare_HandShake_Message():
     handshake_message = b"".join([pstrlen, pstr, reserved])
 
     return handshake_message
+
+def send_new_user_request(username, password, server_sock):
+
+    header = NEW_USER_REQUEST_HEADER
+
+    username_package = package_single_data(username)
+    password_package = package_single_data(password)
+
+    message = b"".join([header, username_package, password_package])
+
+    send_package(message, server_sock)
+
+    return
+
+def recv_new_user_response(server_sock):
+
+    header = server_sock.recv(1)
+
+    if header == NEW_USER_SUCCESS_RESPONSE:
+        print("New User Created!")
+        return True
+
+    elif header == NEW_USER_NAME_TAKEN_ERROR_RESPONSE:
+        print("Username Already Taken")
+        return False
+    else:
+        print("Invalid repsonse")
+        return False
+
+    return
 
 
 def send_login_request(username, password, server_sock):
@@ -63,13 +76,13 @@ def send_login_request(username, password, server_sock):
 
 def recv_login_response(server_sock):
 
-    data = server_sock.recv(1)
+    header = server_sock.recv(1)
 
-    if data == LOGIN_SUCCESS_HEADER:
+    if header == LOGIN_SUCCESS_HEADER:
         print("LOGGED IN!")
         return True
 
-    elif data == LOGIN_ERROR_HEADER:
+    elif header == LOGIN_ERROR_HEADER:
         print("Err on login")
         return False
     else:

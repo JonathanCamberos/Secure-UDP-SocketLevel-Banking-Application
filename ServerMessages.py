@@ -1,11 +1,8 @@
-from Headers import TEST_HEADER
+
+
+
 from Headers import KEEP_ALIVE
-
 from Headers import DISCONNECT_CLIENT
-
-from Headers import LOGIN_REQUEST_HEADER 
-from Headers import STATUS_REQUEST_HEADER
-from Headers import TRANSFER_REQUEST_HEADER
 
 from Headers import MODIFY_SAVINGS_SUCCESS_HEADER
 from Headers import MODIFY_SAVINGS_ERROR_HEADER
@@ -13,15 +10,11 @@ from Headers import MODIFY_SAVINGS_ERROR_HEADER
 from Headers import LOGIN_SUCCESS_HEADER
 from Headers import LOGIN_ERROR_HEADER
 
-from Headers import VIEW_SAVINGS_REQUEST_HEADER
 from Headers import VIEW_SAVINGS_SUCCESS_RESPONSE
 
-from Headers import STATUS_SUCCESS_HEADER 
-from Headers import TRANSFER_SUCCESS_HEADER 
-from Headers import GENERIC_ERROR_HEADER 
-
-from Headers import TRANSFER_ERROR_NOTARGET_HEADER
-from Headers import TRANSFER_ERROR_NOMONEY_HEADER 
+from Headers import NEW_USER_SUCCESS_RESPONSE
+from Headers import NEW_USER_NAME_TAKEN_ERROR_RESPONSE
+from Headers import NEW_USER_MONGO_ERROR_RESPONSE
 
 from BothMessages import send_package
 from BothMessages import package_single_data
@@ -73,3 +66,32 @@ def send_view_savings_success_response(savings, peer_sock):
     return
 
 
+def send_user_created_response(peer_sock):
+
+    header = NEW_USER_SUCCESS_RESPONSE
+
+    message = b"".join([header])
+
+    send_package(message, peer_sock)
+
+    return
+
+def send_user_mongo_error_response(peer_sock):
+
+    header = NEW_USER_MONGO_ERROR_RESPONSE
+
+    message = b"".join([header])
+
+    send_package(message, peer_sock)
+
+    return
+
+def send_user_name_taken_error_response(peer_sock):
+
+    header = NEW_USER_NAME_TAKEN_ERROR_RESPONSE
+
+    message = b"".join([header])
+
+    send_package(message, peer_sock)
+
+    return

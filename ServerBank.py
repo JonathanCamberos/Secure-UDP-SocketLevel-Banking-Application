@@ -2,36 +2,22 @@ import socket
 import select
 import sys
 import argparse
-import struct
 import pymongo 
+import secrets
+import uuid
 
 from pymongo.errors import DuplicateKeyError
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 
-
-from Headers import TEST_HEADER
 from Headers import KEEP_ALIVE
-
 from Headers import DISCONNECT_CLIENT
-
 from Headers import LOGIN_REQUEST_HEADER 
-from Headers import STATUS_REQUEST_HEADER
-from Headers import TRANSFER_REQUEST_HEADER
 
 from Headers import MODIFY_SAVINGS_HEADER
-from Headers import MODIFY_SAVINGS_SUCCESS_HEADER
-
 from Headers import VIEW_SAVINGS_REQUEST_HEADER
-from Headers import VIEW_SAVINGS_SUCCESS_RESPONSE
 
-from Headers import LOGIN_SUCCESS_HEADER
-from Headers import STATUS_SUCCESS_HEADER 
-from Headers import TRANSFER_SUCCESS_HEADER 
-from Headers import GENERIC_ERROR_HEADER 
-from Headers import LOGIN_ERROR_HEADER
-from Headers import TRANSFER_ERROR_NOTARGET_HEADER
-from Headers import TRANSFER_ERROR_NOMONEY_HEADER 
+from Headers import NEW_USER_REQUEST_HEADER
 
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives.asymmetric import dh
@@ -48,7 +34,6 @@ from util import recieve_public_key
 
 from util import print_package_encrypted_testing
 from util import print_unpackage_encrypted_packaged_testing
-
 from util import convert_to_integer
 
 from ServerMessages import send_login_success_response
@@ -56,6 +41,10 @@ from ServerMessages import send_login_error_response
 
 from ServerMessages import send_modify_savings_success_response
 from ServerMessages import send_view_savings_success_response
+
+from ServerMessages import send_user_created_response
+from ServerMessages import send_user_mongo_error_response
+from ServerMessages import send_user_name_taken_error_response
 
 from BothMessages import get_packet_data
 
@@ -72,6 +61,43 @@ user_information_table = ''
 ###################################################################################################
 
 # Database Section
+def generate_unique_id():
+    return str(uuid.uuid4())
+
+
+def add_user_to_database(username, password):
+
+    salt = secrets.token_bytes(16)  # Generate a random 16-byte salt
+    print(f"Random Salt: {salt}")
+    
+    hashed_password = hash_password(password, salt)
+
+    print(f"Plaintext Password: {password}")
+    print(f"Hashed Password: {hashed_password}")
+
+    starting_savings = 0
+
+    # Generate Unique Id
+    unique_id = generate_unique_id()
+
+    # Create a user document
+    new_user = {
+        '_id': unique_id,
+        'username': username,
+        'plaintext password': password,
+        'hashed password': hashed_password,
+        'salt': salt,
+        'savings': starting_savings
+    }
+
+    # Try - Add user to MongoDB
+    try:
+        user_information_table.insert_one(new_user)
+    except DuplicateKeyError as e:
+        print(f"Error: {e}")
+        return 2
+
+    return 1
 
 
 def get_savings(username):
@@ -545,9 +571,9 @@ if __name__ == '__main__':
                     print(f"Client we are serving: {client_we_are_serving}")
                     client_we_are_serving.peer_last_message_time = datetime.now()
 
-                    if packet_header == TEST_HEADER:
+                    if packet_header == KEEP_ALIVE:
 
-                        print("Recieved Packet Type TEST")
+                        print("Recieved Packet KEEP ALIVE")
                         
                         # Call Get Packet Data for as many parameters the header requires
                         info_one = get_packet_data(r)
@@ -626,7 +652,35 @@ if __name__ == '__main__':
                         savings = str(get_savings(username))
 
                         send_view_savings_success_response(savings, r)
-                        
+
+
+                    elif packet_header ==  NEW_USER_REQUEST_HEADER:
+
+                        print("Recieved Packet Type NEW USER")
+
+                        # Call Get Packet Data for as many parameters the header requires
+                        username = get_packet_data(r)
+                        password = get_packet_data(r)
+
+                        print(f"Username: {username}")
+                        print(f"Password: {password}")
+
+                        username = username.decode('utf-8')
+                        password = password.decode('utf-8')
+
+                        print(f"Decoded Username: {username}")
+                        print(f"Decoded Password: {password}")
+
+                        if check_user_exists(username) == True:
+                            print("User already Exists not exist")
+                            send_user_name_taken_error_response(r)
+
+                        res3 = add_user_to_database(username, password)
+
+                        if res3 == 1:
+                            send_user_created_response(r)
+                        else:
+                            send_user_mongo_error_response(r)
 
                     elif packet_header == DISCONNECT_CLIENT:
                         print("Disconnected")
