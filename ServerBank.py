@@ -310,7 +310,7 @@ def validate_peer_list():
         #it has not closed the socket
         # if (curr_time - c.peer_last_message_time).total_seconds() <= 120 (c.sock.fileno != -1):
 
-        if (curr_time - c.peer_last_message_time).total_seconds() > 10:
+        if (curr_time - c.peer_last_message_time).total_seconds() > 60:
             print("Ya out of time bucko")
             check = 0
 
