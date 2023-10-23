@@ -20,7 +20,6 @@ from BothMessages import package_single_data
 from BothMessages import get_packet_data
 
 
-
 def prepare_HandShake_Message():
     pstrlen = b"\x13"
     pstr = b"Bank protocol"
@@ -58,8 +57,6 @@ def recv_new_user_response(server_sock):
     else:
         print("Invalid repsonse")
         return False
-
-    return
 
 
 def send_login_request(username, password, server_sock):

@@ -42,11 +42,7 @@ def send_recv_handshake(server_socket: socket, client_private_key, client_public
     """
 
     # Recv Server Pub key
-    # length = server_socket.recv(2) # Prepend the length of the message
-    # server_public_key = server_socket.recv(int.from_bytes(length, "big"))
-
     server_public_key = recieve_public_key(server_socket)
-
     server_public_key = load_der_public_key(server_public_key, default_backend())
 
     # Sending Client Public Key to Server
@@ -89,8 +85,6 @@ def initialize_server_peer(client_private_key, client_public_key):
             
     except socket.error as e:
         socket_error = True
-
-
 
 # Hello! This is the main code for the Client
 # This section of the Banking Application will be in charge of:
