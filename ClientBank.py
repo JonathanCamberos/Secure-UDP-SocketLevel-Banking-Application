@@ -27,9 +27,11 @@ from ClientMessages import recv_view_savings_response
 
 from ClientMessages import send_new_user_request
 from ClientMessages import recv_new_user_response
+import ClientMessages
 
+# p = prime modulus, g = generator. Both are used for the DH-algorithm and known by both parties beforehand
 p = 0xFFFFFFFFFFFFFFFFC90FDAA22168C234C4C6628B80DC1CD129024E088A67CC74020BBEA63B139B22514A08798E3404DDEF9519B3CD3A431B302B0A6DF25F14374FE1356D6D51C245E485B576625E7EC6F44C42E9A637ED6B0BFF5CB6F406B7EDEE386BFB5A899FA5AE9F24117C4B1FE649286651ECE45B3DC2007CB8A163BF0598DA48361C55D39A69163FA8FD24CF5F83655D23DCA3AD961C62F356208552BB9ED529077096966D670C354E4ABC9804F1746C08CA18217C32905E462E36CE3BE39E772C180E86039B2783A2EC07A28FB5C55DF06F4C52C9DE2BCBF6955817183995497CEA956AE515D2261898FA051015728E5A8AACAA68FFFFFFFFFFFFFFFF
-g = 2   
+g = 2
 server_peer = ''
 shared_key = ''
 iv = ''
@@ -37,12 +39,14 @@ iv = ''
 
 def send_recv_handshake(server_socket: socket, client_private_key, client_public_key):
     """
-    Sends and receives bittorrent handshake needed to initiate a connection
-    with a client
+    Sends and receives banking handshake needed to initiate a connection from the clien
+    with the server.
     """
-
+    global shared_key, iv
     # Recv Server Pub key
     server_public_key = recieve_public_key(server_socket)
+    # Load the received public key in DER (Distinguished Encoding Rules) format
+    # parses the binary data representing the public key and prepares it for cryptographic operations
     server_public_key = load_der_public_key(server_public_key, default_backend())
 
     # Sending Client Public Key to Server
@@ -54,11 +58,11 @@ def send_recv_handshake(server_socket: socket, client_private_key, client_public
     shared_key = generate_shared_secret_key(shared_key_recipe)
     iv = generate_shared_iv(shared_key_recipe)
 
-    print(f"\nShared Key: {shared_key}")
-    print(f"IV: {iv}\n")
+    # print(f"\nShared Key: {shared_key}")
+    # print(f"IV: {iv}\n")
     
     handshake_message = prepare_HandShake_Message()
-
+    # encrypt message with shared-key and possibly iv
     packaged_message = package_message(handshake_message, shared_key, iv)
 
     send_package(server_socket, packaged_message)
@@ -101,9 +105,9 @@ if __name__ == '__main__':
     params_numbers = dh.DHParameterNumbers(p,g)
     parameters = params_numbers.parameters(default_backend())
 
-    # Generate a private key for use in the exchange.
+    # Generate a random private key and its DH-public key for use in the exchange.
     client_private_key = parameters.generate_private_key()
-    client_public_key    = client_private_key.public_key().public_bytes(Encoding.DER, PublicFormat.SubjectPublicKeyInfo)
+    client_public_key  = client_private_key.public_key().public_bytes(Encoding.DER, PublicFormat.SubjectPublicKeyInfo)
           
     # 0.1 - Argument validation (ignore)
     if len(sys.argv) < 1:
@@ -112,7 +116,7 @@ if __name__ == '__main__':
 
     else:
         parser = argparse.ArgumentParser()
-        parser.add_argument('--ip_port',type=int,required=False,help='The port that the BitTorrent clienct connects to')
+        parser.add_argument('--ip_port',type=int,required=False,help='The port that the Banking clienct connects to')
 
         #print("Correct number of arguments")
         args = parser.parse_args()
@@ -179,10 +183,10 @@ if __name__ == '__main__':
         elif user_input == "2":
             print(" ********** Logging In ************\n")
 
-            input_username = input("\nUsername:\nEnter Here: ")
-            input_password = input("\nPassword:\nEnter Here:")
+            input_username = input("\nEnter Username Here: ")
+            input_password = input("\nEnter Password Here:")
 
-            send_login_request(input_username, input_password, server_peer.sock)
+            send_login_request(input_username, input_password, server_peer.sock, shared_key, iv)
             res = recv_login_response(server_peer.sock)
 
             if res == True:
@@ -199,12 +203,12 @@ if __name__ == '__main__':
             
                     if user_input2 == "1":
 
-                       send_modify_savings_request(server_peer.sock) 
+                       send_modify_savings_request(server_peer.sock, shared_key, iv) 
                        recv_modify_savings_response(server_peer.sock)
                     
                     elif user_input2 == "2":
 
-                        send_view_savings_request(input_username, server_peer.sock)
+                        send_view_savings_request(input_username, server_peer.sock, shared_key, iv)
                         recv_view_savings_response(server_peer.sock)
 
                     elif user_input2 == "3":
@@ -220,7 +224,8 @@ if __name__ == '__main__':
                     
             
         elif user_input == "3":
-            print("Thanks for playing!\n")
+            ClientMessages.send_close_request(server_peer.sock, shared_key, iv)
+            ClientMessages.recv_close_request(server_peer.sock)
             loop = False
             
         else:
