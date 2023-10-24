@@ -1,5 +1,6 @@
 
 from Headers import LOGIN_REQUEST_HEADER 
+from Headers import DISCONNECT_CLIENT
 
 from Headers import MODIFY_SAVINGS_HEADER
 from Headers import MODIFY_SAVINGS_SUCCESS_HEADER
@@ -18,6 +19,9 @@ from Headers import NEW_USER_NAME_TAKEN_ERROR_RESPONSE
 from BothMessages import send_package
 from BothMessages import package_single_data
 from BothMessages import get_packet_data
+from BothMessages import encrypt_and_send
+
+from util import package_message
 
 
 def prepare_HandShake_Message():
@@ -59,7 +63,7 @@ def recv_new_user_response(server_sock):
         return False
 
 
-def send_login_request(username, password, server_sock):
+def send_login_request(username, password, server_sock, shared_key, iv):
 
     header = LOGIN_REQUEST_HEADER
 
@@ -67,8 +71,7 @@ def send_login_request(username, password, server_sock):
     password_package = package_single_data(password)
     
     message = b"".join([header, username_package, password_package])
-
-    send_package(message, server_sock)
+    encrypt_and_send(message, server_sock, shared_key, iv)
     return
 
 def recv_login_response(server_sock):
@@ -87,7 +90,7 @@ def recv_login_response(server_sock):
         return False
 
 
-def send_modify_savings_request(server_sock):
+def send_modify_savings_request(server_sock, shared_key, iv):
     
     print("1 - Add")
     print("2 - Subtract")
@@ -100,8 +103,7 @@ def send_modify_savings_request(server_sock):
     amount_package = package_single_data(amount)
 
     message = b"".join([header, add_sub_package, amount_package])
-
-    send_package(message, server_sock)
+    encrypt_and_send(message, server_sock, shared_key, iv)
 
     return
 
@@ -121,13 +123,12 @@ def recv_modify_savings_response(server_sock):
         return False
 
 
-def send_view_savings_request(username, server_sock):
+def send_view_savings_request(username, server_sock, shared_key, iv):
     
     header = VIEW_SAVINGS_REQUEST_HEADER
 
     message = b"".join([header])
-
-    send_package(message, server_sock)
+    encrypt_and_send(message, server_sock, shared_key, iv)
 
     return
 
@@ -141,4 +142,19 @@ def recv_view_savings_response(server_sock):
 
         print(f"Current Savings: {amount}")
 
+    return
+
+def send_close_request(server_sock, shared_key, iv):
+    header = DISCONNECT_CLIENT
+
+    message = b"".join([header])
+    encrypt_and_send(message, server_sock, shared_key, iv)
+
+    return
+
+def recv_close_request(server_sock):
+    header = server_sock.recv(1)
+    if header == DISCONNECT_CLIENT:
+        print("Succesfully exited the banking app!")
+        print("Goodbye!")
     return

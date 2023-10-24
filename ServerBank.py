@@ -46,6 +46,8 @@ from ServerMessages import send_user_created_response
 from ServerMessages import send_user_mongo_error_response
 from ServerMessages import send_user_name_taken_error_response
 
+import ServerMessages
+
 from BothMessages import get_packet_data
 
 client_state_list = []
@@ -106,8 +108,8 @@ def get_savings(username):
 
         raw_user_savings = user_data.get('savings', '')
         int_user_savings = convert_to_integer(raw_user_savings)
-        print(f"Grabbed Raw Savings: {raw_user_savings}")
-        print(f"translated to Int Savings: {int_user_savings}")
+        # print(f"Grabbed Raw Savings: {raw_user_savings}")
+        print(f"Current Savings: {int_user_savings}")
         
         return int_user_savings
     return None
@@ -161,16 +163,12 @@ def proceed_transation(username, type, transaction_amount):
 
 
 def verified_modification_user(mode, transaction_amount, username, password):
-    
-    print(f"Welcome: {username}")
-
     if mode == "1":
        
         # checks if enough funds for transaction
         if verify_transaction(username, 1, transaction_amount):
-
-            print(f"Adding {transaction_amount} is possible")
-            print(f"Proceeding!")
+            # print(f"Adding {transaction_amount} is possible")
+            # print(f"Proceeding!")
             if proceed_transation(username, 1, transaction_amount) == True:
                 print("Success in Adding!")
                 return True
@@ -181,15 +179,12 @@ def verified_modification_user(mode, transaction_amount, username, password):
     
     elif mode == "2":   
              
-
         if verify_transaction(username, 2, transaction_amount):
-            print(f"Subtracting {transaction_amount} is possible")
-            print(f"Proceeding!")
+            # print(f"Subtracting {transaction_amount} is possible")
+            # print(f"Proceeding!")
             if proceed_transation(username, 2, transaction_amount) == True:
-                print("Success In Adding!")
+                print("Succesfully Subtracted given amount.")
                 return True
-        
-
         else:
             print(f"Subtracting {transaction_amount} is not possible")
             print(f"Have a good day!\n")
@@ -197,7 +192,6 @@ def verified_modification_user(mode, transaction_amount, username, password):
     else:
         print("Invalid modifcation mode")
         return False
-
 
     return False
 
@@ -269,7 +263,6 @@ def login_verification(username, password):
         print("User does not exist")
         return False
 
-
     user_salt = get_salt(username)
 
     print(f"\nUser {username} has salt: {user_salt}\n")
@@ -327,16 +320,16 @@ def validate_peer_list():
 
 def recv_handshake_from_initiator(server_socket: socket, server_private_key, server_public_key):
     """
-    Sends and receives bittorrent handshake needed to initiate a connection
+    Sends and receives handshake needed to initiate a connection
     with a client
     """
-    #accept
+    # accept first client waiting in socket.listen() queue
     peer_sock, peer_address = server_socket.accept()
     peer_ipaddr, peer_socket = peer_address
     
-    print(f"Connection Success! Attempting Handshake from: {peer_address}")
+    print(f"Connection Success! Attempting Handshake from: {peer_ipaddr}:{peer_socket}")
     
-    #create new peer (we do not know there peer 'id')
+    #create new peer (we do not know their peer 'id')
     new_peer = Peer("Unknown", peer_ipaddr, peer_socket, peer_sock)
 
     # Sending Server Public Key to Client
@@ -345,18 +338,22 @@ def recv_handshake_from_initiator(server_socket: socket, server_private_key, ser
 
     # Recv Client Pub key
     client_public_key = recieve_public_key(peer_sock)
-   
+    # Load the received public key in DER (Distinguished Encoding Rules) format
+    # parses the binary data representing the public key and prepares it for cryptographic operations
     client_public_key = load_der_public_key(client_public_key, default_backend())
 
     # Create Key Recipe
     shared_key_recipe = server_private_key.exchange(client_public_key)
 
-    # Generate Shared_key and IV with Client for encrypted communication
+    # Generate Shared_key and Initialisation Vector (IV) with Client for encrypted communication
     shared_key = generate_shared_secret_key(shared_key_recipe)
     iv = generate_shared_iv(shared_key_recipe)
 
-    print(f"\nShared Key: {shared_key}")
-    print(f"IV: {iv}\n")
+    # Add established shared_key and iv to the peer data
+    new_peer.shared_key = shared_key
+    new_peer.iv = iv
+    # print(f"\nShared Key: {shared_key}")
+    # print(f"IV: {iv}\n")
 
     # Recv message from client
     recv_encrypted_handshake_message = recieve_package(peer_sock)
@@ -419,7 +416,7 @@ if __name__ == '__main__':
 
     # Generate a private key for use in the exchange.
     server_private_key = parameters.generate_private_key()
-    server_public_key    = server_private_key.public_key().public_bytes(Encoding.DER, PublicFormat.SubjectPublicKeyInfo)
+    server_public_key  = server_private_key.public_key().public_bytes(Encoding.DER, PublicFormat.SubjectPublicKeyInfo)
 
     # 0.1 - Argument validation (ignore)
     if len(sys.argv) < 1:
@@ -475,8 +472,10 @@ if __name__ == '__main__':
     print("Before Entering While loop -")
     print(f"Client State List: {client_state_list}")
 
+    server_on = True
+
     #2.1 - Infinite Loop to Keep Server Constantly listening for Client Information
-    while True:
+    while server_on:
         
         #2.2 -
         rfds = []
@@ -531,14 +530,29 @@ if __name__ == '__main__':
                     continue
         
                 print("Reiceving on some peer")
+                
+                client = None
+                # Identify client
+                serving_peer_host, serving_peer_port = r.getpeername()
+                print(serving_peer_host, "   :    ", serving_peer_port)
+                for k in client_state_list:
+                    print(k.peer_ip_addr , "   :   ", k.peer_port)
+                    # if k.peer_ip_addr == serving_peer_host and k.peer_port == serving_peer_port:
+                    if k.peer_port == serving_peer_port:
+                        client = k
+                        break
+                
+                
+                # Receive package from client
+                encrypted_message = get_packet_data(r)
+                decrypted_message = unpackage_message(encrypted_message, client.shared_key,client.iv)
+                # Isolate header and chop it off the rest of the message
+                packet_header = decrypted_message[0].to_bytes(1,"big")
+                decrypted_message = decrypted_message[1:]
 
-                packet_header = r.recv(1)
                 print(f"Message: {packet_header}")
                 if len(packet_header) == 0:  # end of the file
                     continue
-                # if len(packet_header) == 0:  # end of the file
-                #     print("Something b r o k e")
-                #     continue
                 
                 # headers work directly with bytes
                 # packet_header = struct.unpack("!I", packet_header)
@@ -561,6 +575,7 @@ if __name__ == '__main__':
 
                     print(f"Client State List: {client_state_list}")
 
+                    # Find client to have acces to shared key and iv, as they are unique per connected client and per interaction
                     for k in client_state_list:
                         print(f"Client: {k.peer_ip_addr} and {k.peer_port}")
                         # if k.peer_ip_addr == serving_peer_host and k.peer_port == serving_peer_port:
@@ -581,18 +596,13 @@ if __name__ == '__main__':
                     elif packet_header == LOGIN_REQUEST_HEADER:
 
                         print("Recieved Packet Type LOGIN")
-                        # Call Get Packet Data for as many parameters the header requires
-                        username = get_packet_data(r)
-                        password = get_packet_data(r)
+
+                        # Get username and password from decrypted message
+                        username, password = ServerMessages.get_user_and_pass_from_message(decrypted_message)
 
                         print(f"Username: {username}")
-                        print(f"Password: {password}")
+                        # print(f"Password: {password}")
 
-                        username = username.decode('utf-8')
-                        password = password.decode('utf-8')
-
-                        print(f"Decoded Username: {username}")
-                        print(f"Decoded Password: {password}")
 
                         if login_verification(username, password) == True:
                             print("Logged In!!")
@@ -601,24 +611,21 @@ if __name__ == '__main__':
                             client_we_are_serving.holder_username = username
                             client_we_are_serving.holder_password = password
 
-                            print(f"Client Status username {client_we_are_serving.holder_username}")
-                            print(f"Client Status password {client_we_are_serving.holder_password}")
+                            # print(f"Client Status username {client_we_are_serving.holder_username}")
+                            # print(f"Client Status password {client_we_are_serving.holder_password}")
 
                             send_login_success_response(r)
-                            
 
                         else:
-                            print("Ya fucked up kid")
+                            print("Error occurred")
                             send_login_error_response(r)
 
                     elif packet_header == MODIFY_SAVINGS_HEADER:
 
                         print("Recieved Packet Type MODIFY")
                         # Call Get Packet Data for as many parameters the header requires
-                        add_sub = get_packet_data(r)
-                        amount = get_packet_data(r)
 
-                        add_sub = add_sub.decode('utf-8')
+                        add_sub, amount = ServerMessages.get_amount_to_change(decrypted_message)
 
                         if user_logged_in_status(client_we_are_serving):
                             print("User is logged in, proceed!")
@@ -633,10 +640,9 @@ if __name__ == '__main__':
 
                         amount = convert_to_integer(amount)
 
-                        print(f"type of amount {amount} is {type(amount)}")
-                        print(f"type of amount {amount} is {type(amount)}")
+                        # print(f"type of amount {amount} is {type(amount)}")
 
-                        res2= verified_modification_user(add_sub, amount, client_we_are_serving.holder_username, client_we_are_serving.holder_password)
+                        res2 = verified_modification_user(add_sub, amount, client_we_are_serving.holder_username, client_we_are_serving.holder_password)
 
                         if res2 == True:
                             send_modify_savings_success_response(r)
@@ -652,7 +658,6 @@ if __name__ == '__main__':
                         savings = str(get_savings(username))
 
                         send_view_savings_success_response(savings, r)
-
 
                     elif packet_header ==  NEW_USER_REQUEST_HEADER:
 
@@ -683,8 +688,11 @@ if __name__ == '__main__':
                             send_user_mongo_error_response(r)
 
                     elif packet_header == DISCONNECT_CLIENT:
+                        # TODO: Handle disconnect
+                        server_on = False
+                        ServerMessages.send_disconnect_succes_response(r)
                         print("Disconnected")
-                        
+
                     else:
                         print("none packet header")
 

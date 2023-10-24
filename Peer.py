@@ -17,6 +17,8 @@ class Peer:
         self.handshake_complete = 0
         self.client_logged_in = 0
         self.holder_password = ''
+        self.shared_key = ''
+        self.iv = ''
 
     def __str__(self):
         return "ID: " + self.peer_id + ", " + self.peer_ip_addr + ":" + str(self.peer_port)
