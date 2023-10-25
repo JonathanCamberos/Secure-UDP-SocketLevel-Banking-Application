@@ -669,7 +669,7 @@ if __name__ == '__main__':
 
                         if check_user_exists(username) == True:
                             print("User already Exists not exist")
-                            send_user_name_taken_error_response(r)
+                            send_user_name_taken_error_response(r, client.shared_key,client.iv)
 
                         res3 = add_user_to_database(username, password)
 
