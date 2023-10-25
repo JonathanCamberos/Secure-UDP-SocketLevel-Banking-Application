@@ -157,11 +157,12 @@ if __name__ == '__main__':
     #           - Diffie-Hellman Exchange
     #           - Shared_Secret Exchange
     #           - Encrypted Handshake Message
+    # encrypted
     initialize_server_peer(client_private_key, client_public_key)
 
 
-    print(f"Have the following Server Peer: {server_peer}")
-    print(f"On Socket: {server_peer.sock}")
+    # print(f"Have the following Server Peer: {server_peer}")
+    # print(f"On Socket: {server_peer.sock}")
 
     loop = True
     while loop:
@@ -173,21 +174,23 @@ if __name__ == '__main__':
 
 
         if user_input == "1":
+            # CREATE NEW ACCOUNT
 
             input_username = input("\nUsername:\nEnter Here: ")
             input_password = input("\nPassword:\nEnter Here:")
-
-            send_new_user_request(input_username, input_password, server_peer.sock)
-            recv_new_user_response(server_peer.sock)
+            # encrypted
+            send_new_user_request(input_username, input_password, server_peer.sock, shared_key, iv)
+            recv_new_user_response(server_peer.sock, shared_key, iv)
 
         elif user_input == "2":
+            # LOG IN
             print(" ********** Logging In ************\n")
-
+            
             input_username = input("\nEnter Username Here: ")
             input_password = input("\nEnter Password Here:")
-
+            # encrypted
             send_login_request(input_username, input_password, server_peer.sock, shared_key, iv)
-            res = recv_login_response(server_peer.sock)
+            res = recv_login_response(server_peer.sock, shared_key, iv)
 
             if res == True:
 
@@ -202,14 +205,14 @@ if __name__ == '__main__':
                     user_input2 = input("3 - Log out of the application\n\nEnter Here: ")
             
                     if user_input2 == "1":
-
+                       # encrypted 
                        send_modify_savings_request(server_peer.sock, shared_key, iv) 
-                       recv_modify_savings_response(server_peer.sock)
+                       recv_modify_savings_response(server_peer.sock, shared_key, iv)
                     
                     elif user_input2 == "2":
-
+                        # encrypted
                         send_view_savings_request(input_username, server_peer.sock, shared_key, iv)
-                        recv_view_savings_response(server_peer.sock)
+                        recv_view_savings_response(server_peer.sock, shared_key, iv)
 
                     elif user_input2 == "3":
                         
@@ -219,13 +222,15 @@ if __name__ == '__main__':
                         print("Please input valid option '1', '2', or '3' ")
             
             else: 
-                print("Error on Loginn")
+                print("Error on Login")
                 print("Username or Password Incorrect")
                     
             
         elif user_input == "3":
+            # EXIT CLIENT APP
+            # encrypted
             ClientMessages.send_close_request(server_peer.sock, shared_key, iv)
-            ClientMessages.recv_close_request(server_peer.sock)
+            ClientMessages.recv_close_request(server_peer.sock, shared_key, iv)
             loop = False
             
         else:
@@ -239,6 +244,6 @@ if __name__ == '__main__':
     print("Closing Our Own Socket\n")
     client_socket.close()
     
-    print("Thats all folks! :)")    
+    print("Come back soon! :)")    
 
 

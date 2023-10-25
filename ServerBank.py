@@ -517,7 +517,7 @@ if __name__ == '__main__':
         #2.8 - Check Read File Descriptors 
         if rfds != []:
 
-            print("File descriptors not empty!")
+            # print("File descriptors not empty!")
 
             for r in rfds:
                 if (r.fileno == -1):
@@ -525,32 +525,32 @@ if __name__ == '__main__':
                     continue
 
                 if (r == server_socket):
-                    print("Handshake one")
+                    print("Handshake with client")
                     recv_handshake_from_initiator(server_socket, server_private_key, server_public_key)
                     continue
         
-                print("Reiceving on some peer")
+                # print("Reiceving on some peer")
                 
                 client = None
                 # Identify client
                 serving_peer_host, serving_peer_port = r.getpeername()
-                print(serving_peer_host, "   :    ", serving_peer_port)
+                # print(serving_peer_host, "   :    ", serving_peer_port)
                 for k in client_state_list:
-                    print(k.peer_ip_addr , "   :   ", k.peer_port)
+                    # print(k.peer_ip_addr , "   :   ", k.peer_port)
                     # if k.peer_ip_addr == serving_peer_host and k.peer_port == serving_peer_port:
                     if k.peer_port == serving_peer_port:
                         client = k
                         break
                 
                 
-                # Receive package from client
+                # Receive full package from client
                 encrypted_message = get_packet_data(r)
                 decrypted_message = unpackage_message(encrypted_message, client.shared_key,client.iv)
                 # Isolate header and chop it off the rest of the message
                 packet_header = decrypted_message[0].to_bytes(1,"big")
                 decrypted_message = decrypted_message[1:]
 
-                print(f"Message: {packet_header}")
+                # print(f"Message: {packet_header}")
                 if len(packet_header) == 0:  # end of the file
                     continue
                 
@@ -568,12 +568,12 @@ if __name__ == '__main__':
                             k.peer_last_message_time = datetime.now()
 
                 else:
-                    print("Non Keep Alive Message")
+                    # print("Non Keep Alive Message")
                     serving_peer_host, serving_peer_port = r.getpeername()
-                    print(f"Serving Peer: {serving_peer_host}")
-                    print(f"Serving Port: {serving_peer_port}")
+                    # print(f"Serving Peer: {serving_peer_host}")
+                    # print(f"Serving Port: {serving_peer_port}")
 
-                    print(f"Client State List: {client_state_list}")
+                    # print(f"Client State List: {client_state_list}")
 
                     # Find client to have acces to shared key and iv, as they are unique per connected client and per interaction
                     for k in client_state_list:
@@ -581,9 +581,10 @@ if __name__ == '__main__':
                         # if k.peer_ip_addr == serving_peer_host and k.peer_port == serving_peer_port:
                         #     client_we_are_serving = k
                         if k.peer_port == serving_peer_port:
+                             print(f"Client: {k.peer_ip_addr} and {k.peer_port}")
                              client_we_are_serving = k
 
-                    print(f"Client we are serving: {client_we_are_serving}")
+                    # print(f"Client we are serving: {client_we_are_serving}")
                     client_we_are_serving.peer_last_message_time = datetime.now()
 
                     if packet_header == KEEP_ALIVE:
@@ -591,6 +592,7 @@ if __name__ == '__main__':
                         print("Recieved Packet KEEP ALIVE")
                         
                         # Call Get Packet Data for as many parameters the header requires
+                        # TODO: not used not updated for encryption
                         info_one = get_packet_data(r)
 
                     elif packet_header == LOGIN_REQUEST_HEADER:
@@ -600,7 +602,7 @@ if __name__ == '__main__':
                         # Get username and password from decrypted message
                         username, password = ServerMessages.get_user_and_pass_from_message(decrypted_message)
 
-                        print(f"Username: {username}")
+                        # print(f"Username: {username}")
                         # print(f"Password: {password}")
 
 
@@ -614,11 +616,11 @@ if __name__ == '__main__':
                             # print(f"Client Status username {client_we_are_serving.holder_username}")
                             # print(f"Client Status password {client_we_are_serving.holder_password}")
 
-                            send_login_success_response(r)
+                            send_login_success_response(r, client.shared_key,client.iv)
 
                         else:
                             print("Error occurred")
-                            send_login_error_response(r)
+                            send_login_error_response(r, client.shared_key,client.iv)
 
                     elif packet_header == MODIFY_SAVINGS_HEADER:
 
@@ -633,10 +635,10 @@ if __name__ == '__main__':
                             print("NOT LOGGED IN ")
                             continue
 
-                        print(f"Add or Sub: {add_sub}")
-                        print(f"Amount: {amount}")
-                        print(f"Username: {client_we_are_serving.holder_username}")
-                        print(f"Password: {client_we_are_serving.holder_password}")
+                        # print(f"Add or Sub: {add_sub}")
+                        # print(f"Amount: {amount}")
+                        # print(f"Username: {client_we_are_serving.holder_username}")
+                        # print(f"Password: {client_we_are_serving.holder_password}")
 
                         amount = convert_to_integer(amount)
 
@@ -645,7 +647,7 @@ if __name__ == '__main__':
                         res2 = verified_modification_user(add_sub, amount, client_we_are_serving.holder_username, client_we_are_serving.holder_password)
 
                         if res2 == True:
-                            send_modify_savings_success_response(r)
+                            send_modify_savings_success_response(r, client.shared_key,client.iv)
 
                     elif packet_header == VIEW_SAVINGS_REQUEST_HEADER:
                         
@@ -653,28 +655,17 @@ if __name__ == '__main__':
                         # Call Get Packet Data for as many parameters the header requires
                         
                         username = client_we_are_serving.holder_username
-                        print(f"View User {username}")
+                        # print(f"View User {username}")
 
                         savings = str(get_savings(username))
 
-                        send_view_savings_success_response(savings, r)
+                        send_view_savings_success_response(savings, r, client.shared_key,client.iv)
 
                     elif packet_header ==  NEW_USER_REQUEST_HEADER:
 
                         print("Recieved Packet Type NEW USER")
 
-                        # Call Get Packet Data for as many parameters the header requires
-                        username = get_packet_data(r)
-                        password = get_packet_data(r)
-
-                        print(f"Username: {username}")
-                        print(f"Password: {password}")
-
-                        username = username.decode('utf-8')
-                        password = password.decode('utf-8')
-
-                        print(f"Decoded Username: {username}")
-                        print(f"Decoded Password: {password}")
+                        username, password = ServerMessages.get_user_and_pass_from_message(decrypted_message)
 
                         if check_user_exists(username) == True:
                             print("User already Exists not exist")
@@ -683,14 +674,14 @@ if __name__ == '__main__':
                         res3 = add_user_to_database(username, password)
 
                         if res3 == 1:
-                            send_user_created_response(r)
+                            send_user_created_response(r, client.shared_key,client.iv)
                         else:
-                            send_user_mongo_error_response(r)
+                            send_user_mongo_error_response(r, client.shared_key,client.iv)
 
                     elif packet_header == DISCONNECT_CLIENT:
                         # TODO: Handle disconnect
                         server_on = False
-                        ServerMessages.send_disconnect_succes_response(r)
+                        ServerMessages.send_disconnect_succes_response(r, client.shared_key,client.iv)
                         print("Disconnected")
 
                     else:

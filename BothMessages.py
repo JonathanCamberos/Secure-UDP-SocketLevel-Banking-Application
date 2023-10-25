@@ -16,9 +16,9 @@ def send_package(package, server_sock):
     res = server_sock.sendall(package)
 
     if res == None:
-        print(f"Sent: {len(package)}")
-        print("Entire Package Sent: Success!")
-        print(f"Package: {package}\n")
+        print(f"Sent package of length: {len(package)}")
+        # print("Entire Package Sent: Success!")
+        # print(f"Package: {package}\n")
     else:
         print("\nPartial Package Sent: Error!\n")
     
@@ -27,7 +27,7 @@ def send_package(package, server_sock):
 def get_packet_data(r):
 
     data_len = r.recv(4)
-    print(data_len)
+    # print(data_len)
 
 
     if(data_len == b''):
@@ -36,11 +36,11 @@ def get_packet_data(r):
 
     data_len = struct.unpack("!I", data_len)
     data_len = data_len[0]
-    print(f"Length of Curr Data: {data_len}")
+    # print(f"Length of Curr Data: {data_len}")
 
     data = r.recv(data_len)
 
-    print(f"Data: {data}")
+    # print(f"Data: {data}")
 
     return data
 

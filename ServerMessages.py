@@ -18,42 +18,43 @@ from Headers import NEW_USER_MONGO_ERROR_RESPONSE
 
 from BothMessages import send_package
 from BothMessages import package_single_data
+import BothMessages
 
 
-def send_login_success_response(peer_sock):
+def send_login_success_response(peer_sock, shared_key, iv):
 
     header = LOGIN_SUCCESS_HEADER
 
     message = b"".join([header])
 
-    send_package(message, peer_sock)
+    BothMessages.encrypt_and_send(message, peer_sock, shared_key, iv)
 
     return
 
-def send_login_error_response(peer_sock):
+def send_login_error_response(peer_sock, shared_key, iv):
 
     header = LOGIN_ERROR_HEADER
 
     message = b"".join([header])
 
-    send_package(message, peer_sock)
+    BothMessages.encrypt_and_send(message, peer_sock, shared_key, iv)
 
     return
 
 
 
-def send_modify_savings_success_response(peer_sock):
+def send_modify_savings_success_response(peer_sock, shared_key, iv):
 
     header = MODIFY_SAVINGS_SUCCESS_HEADER
 
     message = b"".join([header])
 
-    send_package(message, peer_sock)
+    BothMessages.encrypt_and_send(message, peer_sock, shared_key, iv)
     
     return
 
 
-def send_view_savings_success_response(savings, peer_sock):
+def send_view_savings_success_response(savings, peer_sock, shared_key, iv):
 
     header = VIEW_SAVINGS_SUCCESS_RESPONSE
 
@@ -61,59 +62,59 @@ def send_view_savings_success_response(savings, peer_sock):
 
     message = b"".join([header, savings_package])
 
-    send_package(message, peer_sock)
+    BothMessages.encrypt_and_send(message, peer_sock, shared_key, iv)
     
     return
 
 
-def send_user_created_response(peer_sock):
+def send_user_created_response(peer_sock, shared_key, iv):
 
     header = NEW_USER_SUCCESS_RESPONSE
 
     message = b"".join([header])
 
-    send_package(message, peer_sock)
+    BothMessages.encrypt_and_send(message, peer_sock, shared_key, iv)
 
     return
 
-def send_user_mongo_error_response(peer_sock):
+def send_user_mongo_error_response(peer_sock, shared_key, iv):
 
     header = NEW_USER_MONGO_ERROR_RESPONSE
 
     message = b"".join([header])
 
-    send_package(message, peer_sock)
+    BothMessages.encrypt_and_send(message, peer_sock, shared_key, iv)
 
     return
 
-def send_user_name_taken_error_response(peer_sock):
+def send_user_name_taken_error_response(peer_sock, shared_key, iv):
 
     header = NEW_USER_NAME_TAKEN_ERROR_RESPONSE
 
     message = b"".join([header])
 
-    send_package(message, peer_sock)
+    BothMessages.encrypt_and_send(message, peer_sock, shared_key, iv)
 
     return
 
-def send_disconnect_succes_response(peer_sock):
+def send_disconnect_succes_response(peer_sock, shared_key, iv):
     header = DISCONNECT_CLIENT
     message = b"".join([header])
-    send_package(message, peer_sock)
+    BothMessages.encrypt_and_send(message, peer_sock, shared_key, iv)
     return
 
 def get_user_and_pass_from_message(message):
 
-    print(message[:4])
+    # print(message[:4])
     username_length = int.from_bytes(message[:4], 'big', signed=False)
-    print(username_length)
+    # print(username_length)
     # Slice username from byte 5 to byte 4+length
     username_bytes = message[4:4+username_length]
 
     # Repeat with password, but starting from the end of username
     remaining_message = message[4+username_length:]
     password_length = int.from_bytes(remaining_message[:4], 'big', signed=False)
-    print(password_length)
+    # print(password_length)
     password_bytes = remaining_message[4:4+password_length]
     
     username = username_bytes.decode('utf-8')
@@ -124,16 +125,16 @@ def get_user_and_pass_from_message(message):
 def get_amount_to_change(message):
     # Litteraly copy of getUsernameAndPassword, find a better name and combine
 
-    print(message[:4])
+    # print(message[:4])
     add_sub_length = int.from_bytes(message[:4], 'big', signed=False)
-    print(add_sub_length)
+    # print(add_sub_length)
     # Slice username from byte 5 to byte 4+length
     add_sub_bytes = message[4:4+add_sub_length]
 
     # Repeat with password, but starting from the end of username
     remaining_message = message[4+add_sub_length:]
     amount_length = int.from_bytes(remaining_message[:4], 'big', signed=False)
-    print(amount_length)
+    # print(amount_length)
     amount_bytes = remaining_message[4:4+amount_length]
     
     add_sub = add_sub_bytes.decode('utf-8')

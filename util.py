@@ -85,7 +85,7 @@ def package_message(message, shared_key, iv):
 
 def unpackage_message(package, shared_key, iv):
 
-    print(f"Package: {package}\n")
+    # print(f"Package: {package}\n")
 
     HMAC_len = 32
     package_len = len(package)
@@ -108,7 +108,7 @@ def send_package(peer_sock, packaged_message):
     if result == None:
         print(f"Sent: {len(packaged_message)}")
         print("Entire Package Sent: Success!")
-        print(f"Package: {packaged_message}\n")
+        # print(f"Package: {packaged_message}\n")
     else:
         print("\nPartial Package Sent: Error!\n")
     

@@ -54,12 +54,12 @@ def add_user_to_database():
     input_password = input("\nChoose a password:\nEnter Here: ")
     
     salt = secrets.token_bytes(16)  # Generate a random 16-byte salt
-    print(f"Random Salt: {salt}")
+    # print(f"Random Salt: {salt}")
     
     hashed_input_password = hash_password(input_password, salt)
 
-    print(f"Plaintext Password: {input_password}")
-    print(f"Hashed Password: {hashed_input_password}")
+    # print(f"Plaintext Password: {input_password}")
+    # print(f"Hashed Password: {hashed_input_password}")
 
     input_savings = input("\nAmount of Savings\nEnter Here: ")
     input_savings = convert_to_integer(input_savings)
@@ -80,7 +80,7 @@ def add_user_to_database():
     new_user = {
         '_id': unique_id,
         'username': input_username,
-        'plaintext password': input_password,
+        # 'plaintext password': input_password,
         'hashed password': hashed_input_password,
         'salt': salt,
         'savings': input_savings
@@ -113,8 +113,8 @@ def get_savings(username):
 
         raw_user_savings = user_data.get('savings', '')
         int_user_savings = convert_to_integer(raw_user_savings)
-        print(f"Grabbed Raw Savings: {raw_user_savings}")
-        print(f"translated to Int Savings: {int_user_savings}")
+        # print(f"Grabbed Raw Savings: {raw_user_savings}")
+        # print(f"translated to Int Savings: {int_user_savings}")
         
         return int_user_savings
     return None
@@ -134,9 +134,9 @@ def verify_password(username, entered_password, salt):
     entered_password_hashed = hash_password(entered_password, salt)
 
 
-    print(f"Stored Hashed Password: {stored_hashed_password}\n")
-    print(f"Input password: {entered_password}0")
-    print(f"Calculated Hashed Password: {entered_password_hashed}")
+    # print(f"Stored Hashed Password: {stored_hashed_password}\n")
+    # print(f"Input password: {entered_password}0")
+    # print(f"Calculated Hashed Password: {entered_password_hashed}")
 
     # Compare the entered password hash with the stored hash
     return entered_password_hashed == stored_hashed_password
@@ -207,7 +207,7 @@ def verified_modification_user(username):
             # checks if enough funds for transaction
             if verify_transaction(username, 1, transaction_amount):
 
-                print(f"Adding {transaction_amount} is possible")
+                # print(f"Adding {transaction_amount} is possible")
                 print(f"Proceeding!")
                 proceed_transation(username, 1, transaction_amount)
             
@@ -224,7 +224,7 @@ def verified_modification_user(username):
                 return
 
             if verify_transaction(username, 2, transaction_amount):
-                print(f"Subtracting {transaction_amount} is possible")
+                # print(f"Subtracting {transaction_amount} is possible")
                 print(f"Proceeding!")
                 proceed_transation(username, 2, transaction_amount)
 
@@ -233,7 +233,7 @@ def verified_modification_user(username):
                 print(f"Have a good day!\n")
 
         elif user_input == "Exit":
-            print("Exiting Mongo Python Tester - Thanks for playing!\n")
+            print("Exiting Modify savings!\n")
             loop = False
             
         else:
@@ -269,7 +269,7 @@ def login_verification(username):
     
     user_salt = get_salt(username)
 
-    print(f"\nUser {username} has salt: {user_salt}\n")
+    # print(f"\nUser {username} has salt: {user_salt}\n")
 
     input_password = input("\nPassword:\nEnter Here:")
 
@@ -297,8 +297,8 @@ def pull_user_data():
     # Query the database for all users with the given username
     user_documents = user_information_table.find({'username': input_username}, {'_id': 0})
 
-    for user_document in user_documents:
-            print("User Information:", user_document)
+    # for user_document in user_documents:
+            # print("User Information:", user_document)
     return 
 
 
