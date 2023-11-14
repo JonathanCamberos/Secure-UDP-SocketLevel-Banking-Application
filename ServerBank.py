@@ -18,42 +18,12 @@ from cryptography.hazmat.primitives.serialization import PublicFormat, Encoding,
 
 import Headers
 
-# from Headers import KEEP_ALIVE
-# from Headers import DISCONNECT_CLIENT
-# from Headers import LOGIN_REQUEST_HEADER 
-
-# from Headers import MODIFY_SAVINGS_HEADER
-# from Headers import VIEW_SAVINGS_REQUEST_HEADER
-
-# from Headers import NEW_USER_REQUEST_HEADER
-
 import util
-
-# from util import generate_shared_secret_key
-# from util import generate_shared_iv
-# from util import unpackage_message
-# from util import recieve_package
-# from util import send_public_key
-# from util import recieve_public_key
-
-# from util import print_package_encrypted_testing
-# from util import print_unpackage_encrypted_packaged_testing
-# from util import convert_to_integer
 
 import ServerMessages
 
-# from ServerMessages import send_login_success_response
-# from ServerMessages import send_login_error_response
-
-# from ServerMessages import send_modify_savings_success_response
-# from ServerMessages import send_view_savings_success_response
-
-# from ServerMessages import send_user_created_response
-# from ServerMessages import send_user_mongo_error_response
-# from ServerMessages import send_user_name_taken_error_response
-
 import BothMessages
-# from BothMessages import get_packet_data
+
 
 client_state_list = []
 
@@ -649,7 +619,7 @@ if __name__ == '__main__':
                         
                         # Call Get Packet Data for as many parameters the header requires
                         # TODO: not used not updated for encryption
-                        info_one = get_packet_data(r)
+                        info_one = BothMessages.get_packet_data(r)
 
 
                     # Login Request:
