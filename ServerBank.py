@@ -10,6 +10,12 @@ from pymongo.errors import DuplicateKeyError
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 
+from cryptography.hazmat.backends import default_backend
+from cryptography.hazmat.primitives.asymmetric import dh
+from datetime import datetime
+from Peer import Peer
+from cryptography.hazmat.primitives.serialization import PublicFormat, Encoding, load_der_public_key
+
 from Headers import KEEP_ALIVE
 from Headers import DISCONNECT_CLIENT
 from Headers import LOGIN_REQUEST_HEADER 
@@ -18,12 +24,6 @@ from Headers import MODIFY_SAVINGS_HEADER
 from Headers import VIEW_SAVINGS_REQUEST_HEADER
 
 from Headers import NEW_USER_REQUEST_HEADER
-
-from cryptography.hazmat.backends import default_backend
-from cryptography.hazmat.primitives.asymmetric import dh
-from datetime import datetime
-from Peer import Peer
-from cryptography.hazmat.primitives.serialization import PublicFormat, Encoding, load_der_public_key
 
 from util import generate_shared_secret_key
 from util import generate_shared_iv
@@ -795,7 +795,7 @@ if __name__ == '__main__':
                     #   Parameters:
                     #       0. No Parameters
                     #       Client simply has exited the program on their side
-                    
+
                     elif packet_header == DISCONNECT_CLIENT:
                         # TODO: Handle disconnect
                         server_on = False
