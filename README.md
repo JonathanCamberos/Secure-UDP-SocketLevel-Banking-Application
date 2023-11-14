@@ -4,7 +4,11 @@ Kinda like payall :)
 
 To use - Have 2 Ubuntu Terminals Open (or any terminal) <br /> <br />
 
-- You will need to create a Python Virtual Environment <br />
+- First Clone the GitHub Directory <br />
+  1. cloning <br />
+     'git clone <url>' <br />
+
+- You will need to create a Python Virtual Environment inside the cloned directory <br />
 Run the following:  <br />
 
   1. Install the vritualenv package <br />
