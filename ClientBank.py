@@ -124,11 +124,11 @@ if __name__ == '__main__':
         if args.ip_port is not None:
             print(f'Running Client with arguments: {args.ip_port}')
         else:
-            print("\nRunning Client with default port '7500' ")
+            print("\nRunning Client with default port '0' ")
 
     # 1.1 - Client Information
     client_ip = '0.0.0.0'  # Use '0.0.0.0' to listen on all available interfaces
-    default_port = 7500
+    default_port = 0 # server will pick next available port
 
     # 1.2 - Creating Server Socket 
     client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
