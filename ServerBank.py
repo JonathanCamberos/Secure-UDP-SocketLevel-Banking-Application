@@ -16,39 +16,44 @@ from datetime import datetime
 from Peer import Peer
 from cryptography.hazmat.primitives.serialization import PublicFormat, Encoding, load_der_public_key
 
-from Headers import KEEP_ALIVE
-from Headers import DISCONNECT_CLIENT
-from Headers import LOGIN_REQUEST_HEADER 
+import Headers
 
-from Headers import MODIFY_SAVINGS_HEADER
-from Headers import VIEW_SAVINGS_REQUEST_HEADER
+# from Headers import KEEP_ALIVE
+# from Headers import DISCONNECT_CLIENT
+# from Headers import LOGIN_REQUEST_HEADER 
 
-from Headers import NEW_USER_REQUEST_HEADER
+# from Headers import MODIFY_SAVINGS_HEADER
+# from Headers import VIEW_SAVINGS_REQUEST_HEADER
 
-from util import generate_shared_secret_key
-from util import generate_shared_iv
-from util import unpackage_message
-from util import recieve_package
-from util import send_public_key
-from util import recieve_public_key
+# from Headers import NEW_USER_REQUEST_HEADER
 
-from util import print_package_encrypted_testing
-from util import print_unpackage_encrypted_packaged_testing
-from util import convert_to_integer
+import util
 
-from ServerMessages import send_login_success_response
-from ServerMessages import send_login_error_response
+# from util import generate_shared_secret_key
+# from util import generate_shared_iv
+# from util import unpackage_message
+# from util import recieve_package
+# from util import send_public_key
+# from util import recieve_public_key
 
-from ServerMessages import send_modify_savings_success_response
-from ServerMessages import send_view_savings_success_response
-
-from ServerMessages import send_user_created_response
-from ServerMessages import send_user_mongo_error_response
-from ServerMessages import send_user_name_taken_error_response
+# from util import print_package_encrypted_testing
+# from util import print_unpackage_encrypted_packaged_testing
+# from util import convert_to_integer
 
 import ServerMessages
 
-from BothMessages import get_packet_data
+# from ServerMessages import send_login_success_response
+# from ServerMessages import send_login_error_response
+
+# from ServerMessages import send_modify_savings_success_response
+# from ServerMessages import send_view_savings_success_response
+
+# from ServerMessages import send_user_created_response
+# from ServerMessages import send_user_mongo_error_response
+# from ServerMessages import send_user_name_taken_error_response
+
+import BothMessages
+# from BothMessages import get_packet_data
 
 client_state_list = []
 
@@ -107,7 +112,7 @@ def get_savings(username):
     if user_data:
 
         raw_user_savings = user_data.get('savings', '')
-        int_user_savings = convert_to_integer(raw_user_savings)
+        int_user_savings = util.convert_to_integer(raw_user_savings)
         # print(f"Grabbed Raw Savings: {raw_user_savings}")
         print(f"Current Savings: {int_user_savings}")
         
@@ -334,10 +339,10 @@ def recv_handshake_from_initiator(server_socket: socket, server_private_key, ser
 
     # Sending Server Public Key to Client
     # peer_sock.send(len(server_public_key).to_bytes(2, "big") + server_public_key)
-    send_public_key(peer_sock, server_public_key)
+    util.send_public_key(peer_sock, server_public_key)
 
     # Recv Client Pub key
-    client_public_key = recieve_public_key(peer_sock)
+    client_public_key = util.recieve_public_key(peer_sock)
     # Load the received public key in DER (Distinguished Encoding Rules) format
     # parses the binary data representing the public key and prepares it for cryptographic operations
     client_public_key = load_der_public_key(client_public_key, default_backend())
@@ -346,8 +351,8 @@ def recv_handshake_from_initiator(server_socket: socket, server_private_key, ser
     shared_key_recipe = server_private_key.exchange(client_public_key)
 
     # Generate Shared_key and Initialisation Vector (IV) with Client for encrypted communication
-    shared_key = generate_shared_secret_key(shared_key_recipe)
-    iv = generate_shared_iv(shared_key_recipe)
+    shared_key = util.generate_shared_secret_key(shared_key_recipe)
+    iv = util.generate_shared_iv(shared_key_recipe)
 
     # Add established shared_key and iv to the peer data
     new_peer.shared_key = shared_key
@@ -356,10 +361,10 @@ def recv_handshake_from_initiator(server_socket: socket, server_private_key, ser
     # print(f"IV: {iv}\n")
 
     # Recv message from client
-    recv_encrypted_handshake_message = recieve_package(peer_sock)
+    recv_encrypted_handshake_message = util.recieve_package(peer_sock)
 
     # Unpackage/Decrypt message from client
-    unpackaged_message = unpackage_message(recv_encrypted_handshake_message, shared_key, iv)
+    unpackaged_message = util.unpackage_message(recv_encrypted_handshake_message, shared_key, iv)
 
     print("Handshake Success!\n")
 
@@ -554,7 +559,7 @@ if __name__ == '__main__':
                 # get_packet_data:
                 #       Reads a pre-pended length, and returns package
                 #       In this case, returns the encrypted package
-                encrypted_message = get_packet_data(r)
+                encrypted_message = BothMessages.get_packet_data(r)
 
                 # Now we must unencrypt/unpackage the encrypted package
                 # We call it uncrypt/unpackge because this current encrypted package has 2 portions
@@ -567,7 +572,7 @@ if __name__ == '__main__':
                 #       Seperates Encrypted Message + 32 bytes (HMAC)
                 #       Verifies HMAC using the shared secret key
                 #       Returns the decrypted message (if HMAC passes)
-                decrypted_message = unpackage_message(encrypted_message, client.shared_key,client.iv)
+                decrypted_message = util.unpackage_message(encrypted_message, client.shared_key,client.iv)
                 
                 
                 # Now we have recieved the package from our client
@@ -603,7 +608,7 @@ if __name__ == '__main__':
                 # Different types of headers
 
                 # Keep Alive Request
-                if (packet_header == KEEP_ALIVE): #Keep Alive Message
+                if (packet_header == Headers.KEEP_ALIVE): #Keep Alive Message
                     print("Keep Alive Message")
                     serving_peer_host, serving_peer_port = r.getpeername()
                     for k in client_state_list:
@@ -638,7 +643,7 @@ if __name__ == '__main__':
 
 
                     # Jussssst in case (this case will never happen)
-                    if packet_header == KEEP_ALIVE:
+                    if packet_header == Headers.KEEP_ALIVE:
 
                         print("Recieved Packet KEEP ALIVE")
                         
@@ -653,7 +658,7 @@ if __name__ == '__main__':
                     #       2. Username
                     #       3. Length of Password
                     #       4. Password
-                    elif packet_header == LOGIN_REQUEST_HEADER:
+                    elif packet_header == Headers.LOGIN_REQUEST_HEADER:
 
                         print("Recieved Packet Type LOGIN")
 
@@ -679,20 +684,20 @@ if __name__ == '__main__':
                             # print(f"Client Status username {client_we_are_serving.holder_username}")
                             # print(f"Client Status password {client_we_are_serving.holder_password}")
 
-                            send_login_success_response(r, client.shared_key,client.iv)
+                            ServerMessages.send_login_success_response(r, client.shared_key,client.iv)
 
                         else:
                             # Client put wrong password
 
                             print("Error occurred")
-                            send_login_error_response(r, client.shared_key,client.iv)
+                            ServerMessages.send_login_error_response(r, client.shared_key,client.iv)
 
 
                     # Modify Savings Request
                     #   Parameters:
                     #       1. Add or Subtract (1 for add, 2 for subtract, in form of string)
                     #       2. Amount (in form of string later converted to integer for calculation)
-                    elif packet_header == MODIFY_SAVINGS_HEADER:
+                    elif packet_header == Headers.MODIFY_SAVINGS_HEADER:
 
                         print("Recieved Packet Type MODIFY")
                         # Call Get Packet Data for as many parameters the header requires
@@ -710,7 +715,7 @@ if __name__ == '__main__':
                         # print(f"Username: {client_we_are_serving.holder_username}")
                         # print(f"Password: {client_we_are_serving.holder_password}")
 
-                        amount = convert_to_integer(amount)
+                        amount = util.convert_to_integer(amount)
 
                         # print(f"type of amount {amount} is {type(amount)}")
 
@@ -728,8 +733,9 @@ if __name__ == '__main__':
                         if res2 == True:
 
                             # Sends user modification request
-                            send_modify_savings_success_response(r, client.shared_key,client.iv)
-
+                            ServerMessages.send_modify_savings_success_response(r, client.shared_key,client.iv)
+                        else:
+                            ServerMessages.send_modify_savings_error_response(r, client.shared_key,client.iv)
 
                     # View Savings Request
                     #   Parameters:
@@ -737,7 +743,7 @@ if __name__ == '__main__':
                     #       The Server has Server Side access to the username of the user currently requesting
                     #       to view their funds
 
-                    elif packet_header == VIEW_SAVINGS_REQUEST_HEADER:
+                    elif packet_header == Headers.VIEW_SAVINGS_REQUEST_HEADER:
 
                         print("Recieved Packet Type VIEW SAVINGS")
                         # Call Get Packet Data for as many parameters the header requires
@@ -754,7 +760,7 @@ if __name__ == '__main__':
                         savings = str(get_savings(username))
 
                         # Send response
-                        send_view_savings_success_response(savings, r, client.shared_key,client.iv)
+                        ServerMessages.send_view_savings_success_response(savings, r, client.shared_key,client.iv)
 
 
                     # New User Request
@@ -762,7 +768,7 @@ if __name__ == '__main__':
                     #       1. Username
                     #       2. Password
 
-                    elif packet_header ==  NEW_USER_REQUEST_HEADER:
+                    elif packet_header ==  Headers.NEW_USER_REQUEST_HEADER:
 
                         print("Recieved Packet Type NEW USER")
 
@@ -774,7 +780,7 @@ if __name__ == '__main__':
                         # If already exists throws error and sends to user
                         if check_user_exists(username) == True:
                             print("User already Exists not exist")
-                            send_user_name_taken_error_response(r, client.shared_key,client.iv)
+                            ServerMessages.send_user_name_taken_error_response(r, client.shared_key,client.iv)
 
 
                         # New username!
@@ -786,9 +792,9 @@ if __name__ == '__main__':
                         # non-1 if MongoDB has some sort of error
                         # Either sent to user
                         if res3 == 1:
-                            send_user_created_response(r, client.shared_key,client.iv)
+                            ServerMessages.send_user_created_response(r, client.shared_key,client.iv)
                         else:
-                            send_user_mongo_error_response(r, client.shared_key,client.iv)
+                            ServerMessages.send_user_mongo_error_response(r, client.shared_key,client.iv)
 
 
                     # Disconnect Request
@@ -796,7 +802,7 @@ if __name__ == '__main__':
                     #       0. No Parameters
                     #       Client simply has exited the program on their side
 
-                    elif packet_header == DISCONNECT_CLIENT:
+                    elif packet_header == Headers.DISCONNECT_CLIENT:
                         # TODO: Handle disconnect
                         server_on = False
                         ServerMessages.send_disconnect_succes_response(r, client.shared_key,client.iv)

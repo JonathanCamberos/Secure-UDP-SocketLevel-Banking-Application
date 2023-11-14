@@ -194,8 +194,7 @@ if __name__ == '__main__':
 
             if res == True:
 
-                
-                print("You have logged in!! Welcome:")
+                print("You have logged in!! Welcome!")
                 loop2 = True
                 while loop2:
                     print("\nWhat would you like to do?")

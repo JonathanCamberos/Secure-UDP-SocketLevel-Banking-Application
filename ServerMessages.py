@@ -54,6 +54,16 @@ def send_modify_savings_success_response(peer_sock, shared_key, iv):
     return
 
 
+def send_modify_savings_error_response(peer_sock, shared_key, iv):
+
+    header = MODIFY_SAVINGS_ERROR_HEADER
+
+    message = b"".join([header])
+
+    BothMessages.encrypt_and_send(message, peer_sock, shared_key, iv)
+    
+    return
+
 def send_view_savings_success_response(savings, peer_sock, shared_key, iv):
 
     header = VIEW_SAVINGS_SUCCESS_RESPONSE
