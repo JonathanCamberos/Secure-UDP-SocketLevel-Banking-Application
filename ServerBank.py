@@ -600,6 +600,9 @@ if __name__ == '__main__':
                 # print("Length:", packet_header)
 
 
+                # Different types of headers
+
+                # Keep Alive Request
                 if (packet_header == KEEP_ALIVE): #Keep Alive Message
                     print("Keep Alive Message")
                     serving_peer_host, serving_peer_port = r.getpeername()
@@ -607,7 +610,10 @@ if __name__ == '__main__':
                         if k.peer_ip_addr == serving_peer_host and k.peer_port == serving_peer_port:
                             k.peer_last_message_time = datetime.now()
 
+                # Anything other than Keep Alive (Because Keep Alive has 0 Parameters)
                 else:
+
+
                     # print("Non Keep Alive Message")
                     serving_peer_host, serving_peer_port = r.getpeername()
                     # print(f"Serving Peer: {serving_peer_host}")
@@ -615,7 +621,8 @@ if __name__ == '__main__':
 
                     # print(f"Client State List: {client_state_list}")
 
-                    # Find client to have acces to shared key and iv, as they are unique per connected client and per interaction
+                    # Find client to have acces to shared key and iv, 
+                    # as they are unique per connected client and per interaction
                     for k in client_state_list:
                         print(f"Client: {k.peer_ip_addr} and {k.peer_port}")
                         # if k.peer_ip_addr == serving_peer_host and k.peer_port == serving_peer_port:
@@ -624,9 +631,13 @@ if __name__ == '__main__':
                              print(f"Client: {k.peer_ip_addr} and {k.peer_port}")
                              client_we_are_serving = k
 
+
+
                     # print(f"Client we are serving: {client_we_are_serving}")
                     client_we_are_serving.peer_last_message_time = datetime.now()
 
+
+                    # Jussssst in case (this case will never happen)
                     if packet_header == KEEP_ALIVE:
 
                         print("Recieved Packet KEEP ALIVE")
@@ -635,6 +646,13 @@ if __name__ == '__main__':
                         # TODO: not used not updated for encryption
                         info_one = get_packet_data(r)
 
+
+                    # Login Request:
+                    #   Parameters:
+                    #       1. Length of Username
+                    #       2. Username
+                    #       3. Length of Password
+                    #       4. Password
                     elif packet_header == LOGIN_REQUEST_HEADER:
 
                         print("Recieved Packet Type LOGIN")
@@ -646,9 +664,14 @@ if __name__ == '__main__':
                         # print(f"Password: {password}")
 
 
+                        # Server Verifies the Username and Password by asking the MongoDB Database
+
                         if login_verification(username, password) == True:
+
+                            # Client Put Correct Password
                             print("Logged In!!")
 
+                            # Server Side verification that Client is logged in (all client connections start as 0)
                             client_we_are_serving.client_logged_in = 1
                             client_we_are_serving.holder_username = username
                             client_we_are_serving.holder_password = password
@@ -659,9 +682,16 @@ if __name__ == '__main__':
                             send_login_success_response(r, client.shared_key,client.iv)
 
                         else:
+                            # Client put wrong password
+
                             print("Error occurred")
                             send_login_error_response(r, client.shared_key,client.iv)
 
+
+                    # Modify Savings Request
+                    #   Parameters:
+                    #       1. Add or Subtract (1 for add, 2 for subtract, in form of string)
+                    #       2. Amount (in form of string later converted to integer for calculation)
                     elif packet_header == MODIFY_SAVINGS_HEADER:
 
                         print("Recieved Packet Type MODIFY")
@@ -684,40 +714,88 @@ if __name__ == '__main__':
 
                         # print(f"type of amount {amount} is {type(amount)}")
 
+
+                        # Verifys if requested modification is possible
+
+                        # verified_modification_user:
+                        #       For add, no check necessary
+                        #       For subtract,
+                        #               Check if user is removing more funds that there are currently 
+                        #               in the account
                         res2 = verified_modification_user(add_sub, amount, client_we_are_serving.holder_username, client_we_are_serving.holder_password)
 
+                        # Modification is possible
                         if res2 == True:
+
+                            # Sends user modification request
                             send_modify_savings_success_response(r, client.shared_key,client.iv)
 
+
+                    # View Savings Request
+                    #   Parameters:
+                    #       0. No Parameters
+                    #       The Server has Server Side access to the username of the user currently requesting
+                    #       to view their funds
+
                     elif packet_header == VIEW_SAVINGS_REQUEST_HEADER:
-                        
+
                         print("Recieved Packet Type VIEW SAVINGS")
                         # Call Get Packet Data for as many parameters the header requires
                         
+                        # Accessing Server Side copy of the Users username (for the DB query)
                         username = client_we_are_serving.holder_username
                         # print(f"View User {username}")
 
+                        
+                        # Server Requests from MongoDB the Information from user
+                        # If user does not exist, throws error and sends back to user as well
+                        # (this case will not happen, user is required to be logged in so their
+                        #  account must exist at this point in time)
                         savings = str(get_savings(username))
 
+                        # Send response
                         send_view_savings_success_response(savings, r, client.shared_key,client.iv)
+
+
+                    # New User Request
+                    #   Parameters:
+                    #       1. Username
+                    #       2. Password
 
                     elif packet_header ==  NEW_USER_REQUEST_HEADER:
 
                         print("Recieved Packet Type NEW USER")
 
+                        # Recieve Parameters
                         username, password = ServerMessages.get_user_and_pass_from_message(decrypted_message)
 
+                        # Checks if Username exists already
+                        # Verifys with MongoDB Database
+                        # If already exists throws error and sends to user
                         if check_user_exists(username) == True:
                             print("User already Exists not exist")
                             send_user_name_taken_error_response(r, client.shared_key,client.iv)
 
+
+                        # New username!
+                        # New user is added with 0 funds
+                        # Sends success message to User
                         res3 = add_user_to_database(username, password)
 
+                        # 1 if MongoDB Succeeds
+                        # non-1 if MongoDB has some sort of error
+                        # Either sent to user
                         if res3 == 1:
                             send_user_created_response(r, client.shared_key,client.iv)
                         else:
                             send_user_mongo_error_response(r, client.shared_key,client.iv)
 
+
+                    # Disconnect Request
+                    #   Parameters:
+                    #       0. No Parameters
+                    #       Client simply has exited the program on their side
+                    
                     elif packet_header == DISCONNECT_CLIENT:
                         # TODO: Handle disconnect
                         server_on = False
