@@ -5,6 +5,7 @@ Kinda like payall :)
 To use - Have 2 Ubuntu Terminals Open (or any terminal) <br /> <br />
 
 - First Clone the GitHub Directory <br />
+Run the following: <br />
   1. cloning <br />
      'git clone <url>' <br />
 
