@@ -543,17 +543,57 @@ if __name__ == '__main__':
                         break
                 
                 
-                # Receive full package from client
+                # We know who we are talking to because of the 'read socket k'
+
+                # Our goal is to # Receive full package from client
+
+                # todo this:
+                #   1. Recieve Prepended Length, in order to 
+                #      recieve correct Encrypted Message Length
+                
+                # get_packet_data:
+                #       Reads a pre-pended length, and returns package
+                #       In this case, returns the encrypted package
                 encrypted_message = get_packet_data(r)
+
+                # Now we must unencrypt/unpackage the encrypted package
+                # We call it uncrypt/unpackge because this current encrypted package has 2 portions
+                #       Portion 1: The Encrypted Message
+                #       Portion 2: The HMAC of the encrypted message + the shared secret 
+                #                   key (from diffie-hellman client/server handshake)
+
+                # Unpackage_message:
+                #       Accounts for length 32 of generated HMAC
+                #       Seperates Encrypted Message + 32 bytes (HMAC)
+                #       Verifies HMAC using the shared secret key
+                #       Returns the decrypted message (if HMAC passes)
                 decrypted_message = unpackage_message(encrypted_message, client.shared_key,client.iv)
+                
+                
+                # Now we have recieved the package from our client
+                
+                #Our Goal is to figure out what to do with it
+
+                # todo this:
+                #   1.  The Header will have the info about the type of package request
+                #       ex: New user request, login request, add funds request, etc
+                #       This will tell the server how many parameters to expect
+
                 # Isolate header and chop it off the rest of the message
                 packet_header = decrypted_message[0].to_bytes(1,"big")
+                
+                # Rest of the message (Parameters of the request)
                 decrypted_message = decrypted_message[1:]
+
+
+                # Now we can check the Header Type
+                # Remember our headers are in direct bytes (see header file for different examples)
 
                 # print(f"Message: {packet_header}")
                 if len(packet_header) == 0:  # end of the file
                     continue
                 
+
                 # headers work directly with bytes
                 # packet_header = struct.unpack("!I", packet_header)
                 # packet_header = packet_header[0]
