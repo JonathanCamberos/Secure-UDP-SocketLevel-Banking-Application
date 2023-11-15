@@ -774,9 +774,11 @@ if __name__ == '__main__':
 
                     elif packet_header == Headers.DISCONNECT_CLIENT:
                         # TODO: Handle disconnect
-                        server_on = False
+                        #server_on = False
                         ServerMessages.send_disconnect_succes_response(r, client.shared_key,client.iv)
-                        print("Disconnected")
+                        client_state_list.remove(client_we_are_serving)
+                        print("Client Disconnected, removed from connection list")
+                        
 
                     else:
                         print("none packet header")

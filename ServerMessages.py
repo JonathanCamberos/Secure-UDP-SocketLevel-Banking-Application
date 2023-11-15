@@ -1,29 +1,13 @@
 
 
+import Headers
 
-from Headers import KEEP_ALIVE
-from Headers import DISCONNECT_CLIENT
-
-from Headers import MODIFY_SAVINGS_SUCCESS_HEADER
-from Headers import MODIFY_SAVINGS_ERROR_HEADER
-
-from Headers import LOGIN_SUCCESS_HEADER
-from Headers import LOGIN_ERROR_HEADER
-
-from Headers import VIEW_SAVINGS_SUCCESS_RESPONSE
-
-from Headers import NEW_USER_SUCCESS_RESPONSE
-from Headers import NEW_USER_NAME_TAKEN_ERROR_RESPONSE
-from Headers import NEW_USER_MONGO_ERROR_RESPONSE
-
-from BothMessages import send_package
-from BothMessages import package_single_data
 import BothMessages
 
 
 def send_login_success_response(peer_sock, shared_key, iv):
 
-    header = LOGIN_SUCCESS_HEADER
+    header = Headers.LOGIN_SUCCESS_HEADER
 
     message = b"".join([header])
 
@@ -33,7 +17,7 @@ def send_login_success_response(peer_sock, shared_key, iv):
 
 def send_login_error_response(peer_sock, shared_key, iv):
 
-    header = LOGIN_ERROR_HEADER
+    header = Headers.LOGIN_ERROR_HEADER
 
     message = b"".join([header])
 
@@ -45,7 +29,7 @@ def send_login_error_response(peer_sock, shared_key, iv):
 
 def send_modify_savings_success_response(peer_sock, shared_key, iv):
 
-    header = MODIFY_SAVINGS_SUCCESS_HEADER
+    header = Headers.MODIFY_SAVINGS_SUCCESS_HEADER
 
     message = b"".join([header])
 
@@ -56,7 +40,7 @@ def send_modify_savings_success_response(peer_sock, shared_key, iv):
 
 def send_modify_savings_error_response(peer_sock, shared_key, iv):
 
-    header = MODIFY_SAVINGS_ERROR_HEADER
+    header = Headers.MODIFY_SAVINGS_ERROR_HEADER
 
     message = b"".join([header])
 
@@ -66,9 +50,9 @@ def send_modify_savings_error_response(peer_sock, shared_key, iv):
 
 def send_view_savings_success_response(savings, peer_sock, shared_key, iv):
 
-    header = VIEW_SAVINGS_SUCCESS_RESPONSE
+    header = Headers.VIEW_SAVINGS_SUCCESS_RESPONSE
 
-    savings_package = package_single_data(savings)
+    savings_package = BothMessages.package_single_data(savings)
 
     message = b"".join([header, savings_package])
 
@@ -79,7 +63,7 @@ def send_view_savings_success_response(savings, peer_sock, shared_key, iv):
 
 def send_user_created_response(peer_sock, shared_key, iv):
 
-    header = NEW_USER_SUCCESS_RESPONSE
+    header = Headers.NEW_USER_SUCCESS_RESPONSE
 
     message = b"".join([header])
 
@@ -89,7 +73,7 @@ def send_user_created_response(peer_sock, shared_key, iv):
 
 def send_user_mongo_error_response(peer_sock, shared_key, iv):
 
-    header = NEW_USER_MONGO_ERROR_RESPONSE
+    header = Headers.NEW_USER_MONGO_ERROR_RESPONSE
 
     message = b"".join([header])
 
@@ -99,7 +83,7 @@ def send_user_mongo_error_response(peer_sock, shared_key, iv):
 
 def send_user_name_taken_error_response(peer_sock, shared_key, iv):
 
-    header = NEW_USER_NAME_TAKEN_ERROR_RESPONSE
+    header = Headers.NEW_USER_NAME_TAKEN_ERROR_RESPONSE
 
     message = b"".join([header])
 
@@ -108,7 +92,7 @@ def send_user_name_taken_error_response(peer_sock, shared_key, iv):
     return
 
 def send_disconnect_succes_response(peer_sock, shared_key, iv):
-    header = DISCONNECT_CLIENT
+    header = Headers.DISCONNECT_CLIENT
     message = b"".join([header])
     BothMessages.encrypt_and_send(message, peer_sock, shared_key, iv)
     return

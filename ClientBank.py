@@ -7,27 +7,12 @@ from cryptography.hazmat.primitives.asymmetric import dh
 from Peer import Peer
 from cryptography.hazmat.primitives.serialization import PublicFormat, Encoding, load_der_public_key
 
-from util import generate_shared_secret_key
-from util import generate_shared_iv
-from util import package_message
-from util import send_package
-from util import send_public_key
-from util import recieve_public_key
+import util
 
-from ClientMessages import prepare_HandShake_Message
-
-from ClientMessages import send_login_request
-from ClientMessages import recv_login_response
-
-from ClientMessages import send_modify_savings_request
-from ClientMessages import recv_modify_savings_response
-
-from ClientMessages import send_view_savings_request
-from ClientMessages import recv_view_savings_response
-
-from ClientMessages import send_new_user_request
-from ClientMessages import recv_new_user_response
 import ClientMessages
+
+
+
 
 # p = prime modulus, g = generator. Both are used for the DH-algorithm and known by both parties beforehand
 p = 0xFFFFFFFFFFFFFFFFC90FDAA22168C234C4C6628B80DC1CD129024E088A67CC74020BBEA63B139B22514A08798E3404DDEF9519B3CD3A431B302B0A6DF25F14374FE1356D6D51C245E485B576625E7EC6F44C42E9A637ED6B0BFF5CB6F406B7EDEE386BFB5A899FA5AE9F24117C4B1FE649286651ECE45B3DC2007CB8A163BF0598DA48361C55D39A69163FA8FD24CF5F83655D23DCA3AD961C62F356208552BB9ED529077096966D670C354E4ABC9804F1746C08CA18217C32905E462E36CE3BE39E772C180E86039B2783A2EC07A28FB5C55DF06F4C52C9DE2BCBF6955817183995497CEA956AE515D2261898FA051015728E5A8AACAA68FFFFFFFFFFFFFFFF
@@ -44,28 +29,28 @@ def send_recv_handshake(server_socket: socket, client_private_key, client_public
     """
     global shared_key, iv
     # Recv Server Pub key
-    server_public_key = recieve_public_key(server_socket)
+    server_public_key = util.recieve_public_key(server_socket)
     # Load the received public key in DER (Distinguished Encoding Rules) format
     # parses the binary data representing the public key and prepares it for cryptographic operations
     server_public_key = load_der_public_key(server_public_key, default_backend())
 
     # Sending Client Public Key to Server
-    send_public_key(server_socket, client_public_key)
+    util.send_public_key(server_socket, client_public_key)
 
     # Perform key derivation.
     shared_key_recipe = client_private_key.exchange(server_public_key)
     
-    shared_key = generate_shared_secret_key(shared_key_recipe)
-    iv = generate_shared_iv(shared_key_recipe)
+    shared_key = util.generate_shared_secret_key(shared_key_recipe)
+    iv = util.generate_shared_iv(shared_key_recipe)
 
     # print(f"\nShared Key: {shared_key}")
     # print(f"IV: {iv}\n")
     
-    handshake_message = prepare_HandShake_Message()
+    handshake_message = ClientMessages.prepare_HandShake_Message()
     # encrypt message with shared-key and possibly iv
-    packaged_message = package_message(handshake_message, shared_key, iv)
+    packaged_message = util.package_message(handshake_message, shared_key, iv)
 
-    send_package(server_socket, packaged_message)
+    util.send_package(server_socket, packaged_message)
 
     print(f"Handshake Success!\n")
 
@@ -179,8 +164,8 @@ if __name__ == '__main__':
             input_username = input("\nUsername:\nEnter Here: ")
             input_password = input("\nPassword:\nEnter Here:")
             # encrypted
-            send_new_user_request(input_username, input_password, server_peer.sock, shared_key, iv)
-            recv_new_user_response(server_peer.sock, shared_key, iv)
+            ClientMessages.send_new_user_request(input_username, input_password, server_peer.sock, shared_key, iv)
+            ClientMessages.recv_new_user_response(server_peer.sock, shared_key, iv)
 
         elif user_input == "2":
             # LOG IN
@@ -189,8 +174,8 @@ if __name__ == '__main__':
             input_username = input("\nEnter Username Here: ")
             input_password = input("\nEnter Password Here:")
             # encrypted
-            send_login_request(input_username, input_password, server_peer.sock, shared_key, iv)
-            res = recv_login_response(server_peer.sock, shared_key, iv)
+            ClientMessages.send_login_request(input_username, input_password, server_peer.sock, shared_key, iv)
+            res = ClientMessages.recv_login_response(server_peer.sock, shared_key, iv)
 
             if res == True:
 
@@ -205,13 +190,13 @@ if __name__ == '__main__':
             
                     if user_input2 == "1":
                        # encrypted 
-                       send_modify_savings_request(server_peer.sock, shared_key, iv) 
-                       recv_modify_savings_response(server_peer.sock, shared_key, iv)
+                       ClientMessages.send_modify_savings_request(server_peer.sock, shared_key, iv) 
+                       ClientMessages.recv_modify_savings_response(server_peer.sock, shared_key, iv)
                     
                     elif user_input2 == "2":
                         # encrypted
-                        send_view_savings_request(input_username, server_peer.sock, shared_key, iv)
-                        recv_view_savings_response(server_peer.sock, shared_key, iv)
+                        ClientMessages.send_view_savings_request(input_username, server_peer.sock, shared_key, iv)
+                        ClientMessages.recv_view_savings_response(server_peer.sock, shared_key, iv)
 
                     elif user_input2 == "3":
                         
