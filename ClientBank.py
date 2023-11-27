@@ -1,17 +1,29 @@
 import socket
 import sys
 import argparse
+import datetime
 
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives.asymmetric import dh
 from Peer import Peer
 from cryptography.hazmat.primitives.serialization import PublicFormat, Encoding, load_der_public_key
 
+
+from cryptography import x509
+from cryptography.x509.oid import NameOID
+from cryptography.hazmat.primitives import serialization
+from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.primitives.asymmetric import rsa
+
+
 import util
-
 import ClientMessages
+import BothMessages
 
 
+
+client_self_cert = ''
+client_self_cert_bytes = ''
 
 
 # p = prime modulus, g = generator. Both are used for the DH-algorithm and known by both parties beforehand
@@ -22,7 +34,7 @@ shared_key = ''
 iv = ''
 
 
-def send_recv_handshake(server_socket: socket, client_private_key, client_public_key):
+def send_recv_handshake(server_socket: socket, client_private_key, client_public_key, client_self_cert_bytes):
     """
     Sends and receives banking handshake needed to initiate a connection from the clien
     with the server.
@@ -46,18 +58,26 @@ def send_recv_handshake(server_socket: socket, client_private_key, client_public
     # print(f"\nShared Key: {shared_key}")
     # print(f"IV: {iv}\n")
     
-    handshake_message = ClientMessages.prepare_HandShake_Message()
-    # encrypt message with shared-key and possibly iv
-    packaged_message = util.package_message(handshake_message, shared_key, iv)
 
-    util.send_package(server_socket, packaged_message)
+    
+
+
+
+
+
+
+    # handshake_message = ClientMessages.prepare_HandShake_Message()
+    # # encrypt message with shared-key and possibly iv
+    # packaged_message = util.package_message(handshake_message, shared_key, iv)
+
+    # util.send_package(server_socket, packaged_message)
 
     print(f"Handshake Success!\n")
 
     return True
 
 
-def initialize_server_peer(client_private_key, client_public_key):
+def initialize_server_peer(client_private_key, client_public_key, client_self_cert_bytes):
     global server_peer
     try:
 
@@ -67,7 +87,7 @@ def initialize_server_peer(client_private_key, client_public_key):
         
         print(f"Connection Success! Attempting Handshake")
         
-        if send_recv_handshake(server_socket, client_private_key, client_public_key):
+        if send_recv_handshake(server_socket, client_private_key, client_public_key, client_self_cert_bytes):
 
             server_peer.set_sock(server_socket)
             rlist.append(server_socket)
@@ -85,6 +105,75 @@ def initialize_server_peer(client_private_key, client_public_key):
 #       - Option for viewing Bank information, Adding functions, Taking out Funds, sending Funds to Friend
 
 if __name__ == '__main__':
+
+    # -2.0 - Generate a RSA Private/Public Key
+
+    client_private_rsa_key = rsa.generate_private_key(
+        public_exponent=65537,
+        key_size=2048, 
+    )
+
+    print("Client Private RSA Key:")
+    print(client_private_rsa_key)
+
+
+    client_public_rsa_key = client_private_rsa_key.public_key()
+
+    client_public_rsa_key_bytes = client_public_rsa_key.public_bytes(
+        encoding=serialization.Encoding.DER,
+        format=serialization.PublicFormat.SubjectPublicKeyInfo
+    )
+
+    print("\nClient Public RSA Key")
+    print(client_public_rsa_key)
+
+    print("\nClient Public RSA Keys in Bytes")
+    print(client_public_rsa_key_bytes)
+
+
+    # Various details about who we are. For a self-signed certificate the
+    # subject and issuer are always the same
+    subject = issuer = x509.Name([
+        x509.NameAttribute(NameOID.COUNTRY_NAME, u"US"),
+        x509.NameAttribute(NameOID.STATE_OR_PROVINCE_NAME, u"New York"),
+        x509.NameAttribute(NameOID.LOCALITY_NAME, u"New York"),
+        x509.NameAttribute(NameOID.ORGANIZATION_NAME, u"Client"),
+        x509.NameAttribute(NameOID.COMMON_NAME, u"Client Connection"),
+    ])
+
+    
+    # Generate Self-Signed Certificate
+    client_self_cert = x509.CertificateBuilder().subject_name(
+        subject
+    ).issuer_name(
+        issuer
+    ).public_key(
+        client_private_rsa_key.public_key()
+    ).serial_number(
+        x509.random_serial_number()
+    ).not_valid_before(
+        datetime.datetime.now(datetime.timezone.utc)
+    ).not_valid_after(
+        # Our certificate will be valid for 10 days
+        datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(days=10)
+    ).add_extension(
+        x509.SubjectAlternativeName([x509.DNSName(u"localhost")]),
+        critical=False,
+    # Sign our certificate with our private key
+    ).sign(client_private_rsa_key, hashes.SHA256())
+
+    print("\nClient Self-Signed Certificate:")
+    print(client_self_cert)
+    print("\n")
+
+    #print original bytes
+    # print("\nClient Certificate in Bytes: ")
+    client_self_cert_bytes = client_self_cert.public_bytes(encoding=serialization.Encoding.PEM)
+    # print(client_self_cert_bytes)
+
+
+
+
 
     # 0.0 - Generating Parameters for Diffie–Hellman exchange via private/public key strategy 
     params_numbers = dh.DHParameterNumbers(p,g)
@@ -143,7 +232,7 @@ if __name__ == '__main__':
     #           - Shared_Secret Exchange
     #           - Encrypted Handshake Message
     # encrypted
-    initialize_server_peer(client_private_key, client_public_key)
+    initialize_server_peer(client_private_key, client_public_key, client_self_cert_bytes)
 
 
     # print(f"Have the following Server Peer: {server_peer}")

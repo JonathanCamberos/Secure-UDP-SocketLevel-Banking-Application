@@ -24,21 +24,40 @@ def send_package(package, server_sock):
     
     return
 
+
+# Used in the (length + Encrypted_Message) portion of the code
 def get_packet_data(r):
 
-    data_len = r.recv(4)
+    data_length = r.recv(4)
+    sum_data_length = 0
+    data = b""
+
     # print(data_len)
 
-
-    if(data_len == b''):
+    if(data_length == b''):
         return b''
 
 
-    data_len = struct.unpack("!I", data_len)
-    data_len = data_len[0]
-    # print(f"Length of Curr Data: {data_len}")
+    data_length = struct.unpack("!I", data_length)
+    data_length = data_length[0]
+    # print(f"Length of Curr Data: {data_length}")
 
-    data = r.recv(data_len)
+    print(f"\nRecieved Packet of Total length: {data_length}")
+
+    while (sum_data_length < data_length):
+        print(f"Have read {sum_data_length} Bytes")
+
+        if (sum_data_length + 1024) > data_length:
+            temp_data = r.recv(data_length - sum_data_length)
+        else:
+            temp_data = r.recv(1024)
+
+        data = b"".join([data, temp_data])
+        sum_data_length += len(temp_data)    
+
+    print(f"Finished Reading {len(data)} amount of bytes\n")
+
+    # data = r.recv(data_length)
 
     # print(f"Data: {data}")
 

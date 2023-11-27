@@ -5,6 +5,8 @@ import argparse
 import pymongo 
 import secrets
 import uuid
+import datetime
+
 
 from pymongo.errors import DuplicateKeyError
 from cryptography.hazmat.primitives import hashes
@@ -12,20 +14,25 @@ from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives.asymmetric import dh
-from datetime import datetime
+from datetime import datetime as dt
 from Peer import Peer
 from cryptography.hazmat.primitives.serialization import PublicFormat, Encoding, load_der_public_key
 
+from cryptography import x509
+from cryptography.x509.oid import NameOID
+from cryptography.hazmat.primitives import serialization
+from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.primitives.asymmetric import rsa
+
+
 import Headers
-
 import util
-
 import ServerMessages
-
 import BothMessages
-
+import Mongo_util
 
 client_state_list = []
+server_self_cert = ''
 
 conn_str = "mongodb+srv://jcambero:jcambero@cluster0.nkjnjyb.mongodb.net/"
 bank_database = ''
@@ -273,7 +280,7 @@ def validate_peer_list():
     new_clientlist = []
     for c in client_state_list:
         check = 1
-        curr_time = datetime.now()
+        curr_time = dt.now()
         #Check that client has sent a message in the past two minutes and that
         #it has not closed the socket
         # if (curr_time - c.peer_last_message_time).total_seconds() <= 120 (c.sock.fileno != -1):
@@ -330,11 +337,19 @@ def recv_handshake_from_initiator(server_socket: socket, server_private_key, ser
     # print(f"\nShared Key: {shared_key}")
     # print(f"IV: {iv}\n")
 
-    # Recv message from client
-    recv_encrypted_handshake_message = util.recieve_package(peer_sock)
 
-    # Unpackage/Decrypt message from client
-    unpackaged_message = util.unpackage_message(recv_encrypted_handshake_message, shared_key, iv)
+
+
+
+
+
+
+
+    # # Recv message from client
+    # recv_encrypted_handshake_message = util.recieve_package(peer_sock)
+
+    # # Unpackage/Decrypt message from client
+    # unpackaged_message = util.unpackage_message(recv_encrypted_handshake_message, shared_key, iv)
 
     print("Handshake Success!\n")
 
@@ -362,6 +377,77 @@ def recv_handshake_from_initiator(server_socket: socket, server_private_key, ser
 #   - Verifying with Certificate Server (TO-DO)
 #       - 
 if __name__ == '__main__':
+
+
+     # -3.0 - Generate a RSA Private/Public Key
+
+    server_private_rsa_key = rsa.generate_private_key(
+        public_exponent=65537,
+        key_size=2048, 
+    )
+
+    print("Server Private RSA Key:")
+    print(server_private_rsa_key)
+
+
+    server_public_rsa_key = server_private_rsa_key.public_key()
+
+    server_public_rsa_key_bytes = server_public_rsa_key.public_bytes(
+        encoding=serialization.Encoding.DER,
+        format=serialization.PublicFormat.SubjectPublicKeyInfo
+    )
+
+    print("\nServer Public RSA Key")
+    print(server_public_rsa_key)
+
+    print("\nServer Public RSA Keys in Bytes")
+    print(server_public_rsa_key_bytes)
+
+
+
+
+    # -2.0 - Generate Certificate for Client (self-signed)
+
+    # Various details about who we are. For a self-signed certificate the
+    # subject and issuer are always the same
+    subject = issuer = x509.Name([
+        x509.NameAttribute(NameOID.COUNTRY_NAME, u"US"),
+        x509.NameAttribute(NameOID.STATE_OR_PROVINCE_NAME, u"Colorado"),
+        x509.NameAttribute(NameOID.LOCALITY_NAME, u"Denver"),
+        x509.NameAttribute(NameOID.ORGANIZATION_NAME, u"Bank of the America"),
+        x509.NameAttribute(NameOID.COMMON_NAME, u"bofaa.com"),
+    ])
+
+    # Generate Self-Signed Certificate
+    server_self_cert = x509.CertificateBuilder().subject_name(
+        subject
+    ).issuer_name(
+        issuer
+    ).public_key(
+        server_private_rsa_key.public_key()
+    ).serial_number(
+        x509.random_serial_number()
+    ).not_valid_before(
+        datetime.datetime.now(datetime.timezone.utc)
+    ).not_valid_after(
+        # Our certificate will be valid for 10 days
+        datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(days=10)
+    ).add_extension(
+        x509.SubjectAlternativeName([x509.DNSName(u"localhost")]),
+        critical=False,
+    # Sign our certificate with our private key
+    ).sign(server_private_rsa_key, hashes.SHA256())
+
+    print("\nServer Self-Signed Certificate:")
+    print(server_self_cert)
+    print("\n")
+
+    #print original bytes
+    # print("\nServer Certificate in Bytes: ")
+    server_self_cert_bytes = server_self_cert.public_bytes(encoding=serialization.Encoding.PEM)
+    # print(server_self_cert_bytes)
+
+
 
     print("Setting Up Database")
 
@@ -471,7 +557,7 @@ if __name__ == '__main__':
         rlist.append(server_socket)
 
         #2.6 - Timer (not sure, figure out later)
-        time_before_select = datetime.now()
+        time_before_select = dt.now()
 
         #2.7 - Select socket function:
         #           - Select function takes three lists of file descriptors as parameters:
@@ -583,7 +669,7 @@ if __name__ == '__main__':
                     serving_peer_host, serving_peer_port = r.getpeername()
                     for k in client_state_list:
                         if k.peer_ip_addr == serving_peer_host and k.peer_port == serving_peer_port:
-                            k.peer_last_message_time = datetime.now()
+                            k.peer_last_message_time = dt.now()
 
                 # Anything other than Keep Alive (Because Keep Alive has 0 Parameters)
                 else:
@@ -609,7 +695,7 @@ if __name__ == '__main__':
 
 
                     # print(f"Client we are serving: {client_we_are_serving}")
-                    client_we_are_serving.peer_last_message_time = datetime.now()
+                    client_we_are_serving.peer_last_message_time = dt.now()
 
 
                     # Jussssst in case (this case will never happen)
