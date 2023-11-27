@@ -246,6 +246,9 @@ if __name__ == '__main__':
 
     # print(f"Have the following Server Peer: {server_peer}")
     # print(f"On Socket: {server_peer.sock}")
+    server_public_key = server_peer.peer_certificate.public_key()
+    print("Server public key: ")
+    print(server_public_key)
 
     loop = True
     while loop:
@@ -262,8 +265,9 @@ if __name__ == '__main__':
             input_username = input("\nUsername:\nEnter Here: ")
             input_password = input("\nPassword:\nEnter Here:")
             # encrypted
-            ClientMessages.send_new_user_request(input_username, input_password, server_peer.sock, shared_key, iv)
-            ClientMessages.recv_new_user_response(server_peer.sock, shared_key, iv)
+            ClientMessages.send_new_user_request(input_username, input_password, server_peer.sock, shared_key, iv,
+                                                 client_private_rsa_key)
+            ClientMessages.recv_new_user_response(server_peer.sock, shared_key, iv, server_public_key)
 
         elif user_input == "2":
             # LOG IN
@@ -272,8 +276,9 @@ if __name__ == '__main__':
             input_username = input("\nEnter Username Here: ")
             input_password = input("\nEnter Password Here:")
             # encrypted
-            ClientMessages.send_login_request(input_username, input_password, server_peer.sock, shared_key, iv)
-            res = ClientMessages.recv_login_response(server_peer.sock, shared_key, iv)
+            ClientMessages.send_login_request(input_username, input_password, server_peer.sock, shared_key, iv,
+                                              client_private_rsa_key)
+            res = ClientMessages.recv_login_response(server_peer.sock, shared_key, iv, server_public_key)
 
             if res == True:
 
@@ -288,13 +293,14 @@ if __name__ == '__main__':
             
                     if user_input2 == "1":
                        # encrypted 
-                       ClientMessages.send_modify_savings_request(server_peer.sock, shared_key, iv) 
-                       ClientMessages.recv_modify_savings_response(server_peer.sock, shared_key, iv)
+                       ClientMessages.send_modify_savings_request(server_peer.sock, shared_key, iv, client_private_rsa_key)
+                       ClientMessages.recv_modify_savings_response(server_peer.sock, shared_key, iv, server_public_key)
                     
                     elif user_input2 == "2":
                         # encrypted
-                        ClientMessages.send_view_savings_request(input_username, server_peer.sock, shared_key, iv)
-                        ClientMessages.recv_view_savings_response(server_peer.sock, shared_key, iv)
+                        ClientMessages.send_view_savings_request(input_username, server_peer.sock, shared_key, iv,
+                                                                 client_private_rsa_key)
+                        ClientMessages.recv_view_savings_response(server_peer.sock, shared_key, iv, server_public_key)
 
                     elif user_input2 == "3":
                         
@@ -311,8 +317,8 @@ if __name__ == '__main__':
         elif user_input == "3":
             # EXIT CLIENT APP
             # encrypted
-            ClientMessages.send_close_request(server_peer.sock, shared_key, iv)
-            ClientMessages.recv_close_request(server_peer.sock, shared_key, iv)
+            ClientMessages.send_close_request(server_peer.sock, shared_key, iv, client_private_rsa_key)
+            ClientMessages.recv_close_request(server_peer.sock, shared_key, iv, server_public_key)
             loop = False
             
         else:

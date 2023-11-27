@@ -14,14 +14,11 @@ class Peer:
         self.sock = sd
         self.peer_last_message_time = datetime.now()
         self.peer_last_send_time = -1
+        self.peer_certificate = 0
         self.handshake_complete = 0
-        self.client_logged_in = 0
-        self.holder_password = ''
-        self.shared_key = ''
-        self.iv = ''
 
     def __str__(self):
-        return "ID: " + self.peer_id + ", " + self.peer_ip_addr + ":" + str(self.peer_port)
+        return "Peer -> ID: " + str(self.peer_id) + ", " + str(self.peer_ip_addr) + ":" + str(self.peer_port) + "Socket" + str(self.sock)
 
     def __eq__(self, other):
         """Overrides the default implementation"""

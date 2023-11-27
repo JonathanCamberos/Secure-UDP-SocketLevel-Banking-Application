@@ -5,6 +5,10 @@ from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes, hmac
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 
+from cryptography.hazmat.primitives.asymmetric import padding
+from cryptography.exceptions import InvalidSignature
+
+
 def convert_to_integer(s):
     try:
         return int(s)
@@ -67,6 +71,53 @@ def generate_shared_iv(shared_key_recipe):
          info=b'initialization_vector_string',
      ).derive(shared_key_recipe)
     return iv
+
+
+# New functions for signing messages
+def generate_signature(message, private_rsa_key):
+    signature = private_rsa_key.sign(message,
+                                     padding.PSS(mgf=padding.MGF1(hashes.SHA256()), salt_length=padding.PSS.MAX_LENGTH),
+                                     hashes.SHA256())
+    return signature
+
+
+def validate_signature(message, signature, public_rsa_key):
+    try:
+        public_rsa_key.verify(signature, message,
+                              padding.PSS(mgf=padding.MGF1(hashes.SHA256()), salt_length=padding.PSS.MAX_LENGTH),
+                              hashes.SHA256())
+        return True
+    except InvalidSignature as e:
+        return False
+
+
+def package_and_sign_message(message, shared_key, iv, private_key):
+    # Encrypt the message
+    encrypted_message = encrypt_message(message, shared_key, iv)
+
+    # Generate signature for the encrypted message
+    signature = generate_signature(encrypted_message, private_key)
+
+    # Package Message Together
+    packaged_message = b"".join([encrypted_message, signature])
+
+    return packaged_message
+
+
+def unpackage_signed_message(package, shared_key, iv, sender_public_key):
+    sign_len = 256
+    package_len = len(package)
+    print(f"Test; Package length: {package_len}")
+    encrypted_len = package_len - sign_len
+    encrypted_message, signature = struct.unpack(f"{encrypted_len}s256s", package)
+    decrypted_message = decrypt_message(encrypted_message, shared_key, iv)
+
+    if validate_signature(encrypted_message, signature, sender_public_key):
+        print(f"Valid Package, acepted!")
+    else:
+        print(f"Invalid Package, rejected!")
+    return decrypted_message
+# END of new functions for signature
 
 
 def package_message(message, shared_key, iv):

@@ -48,7 +48,7 @@ def send_peer_self_cert(self_cert_bytes, peer_sock, shared_key, iv):
 
     message = b"".join([header, self_cert_package])
 
-    encrypt_and_send(message, peer_sock, shared_key, iv)
+    handshake_encrypt_and_send(message, peer_sock, shared_key, iv)
 
     return
 
@@ -127,7 +127,20 @@ def get_packet_data(r):
 
     return data
 
-def encrypt_and_send(message, server_sock, key, iv):
+
+def encrypt_and_send(message, server_sock, key, iv, private_key):
+    # Encrypt message using shared key and iv
+    encrypted_message = util.package_and_sign_message(message, key, iv, private_key)
+    # add 4 bytes containing package length and prepend this to the package
+    length = len(encrypted_message).to_bytes(4, "big")
+    encr_message_with_length_prefix = b"".join([length, encrypted_message])
+
+    send_package(encr_message_with_length_prefix, server_sock)
+
+    return
+
+
+def handshake_encrypt_and_send(message, server_sock, key, iv):
     # Encrypt message using shared key and iv
     encrypted_message = util.package_message(message, key, iv)
     # add 4 bytes containing package length and prepend this to the package
