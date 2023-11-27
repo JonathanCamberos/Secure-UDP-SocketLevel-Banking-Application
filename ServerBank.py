@@ -300,7 +300,7 @@ def validate_peer_list():
 
     return
 
-def recv_handshake_from_initiator(server_socket: socket, server_private_key, server_public_key):
+def recv_handshake_from_initiator(server_socket: socket, server_private_key, server_public_key, server_self_cert_bytes):
     """
     Sends and receives handshake needed to initiate a connection
     with a client
@@ -338,10 +338,19 @@ def recv_handshake_from_initiator(server_socket: socket, server_private_key, ser
     # print(f"IV: {iv}\n")
 
 
+    peer_self_cert = BothMessages.recv_peer_self_cert(peer_sock, shared_key, iv)
+
+    new_peer.peer_certificate = peer_self_cert
+
+    print("\nRecieved Peer Certificate:")
+    print(new_peer.peer_certificate)
+    print("\n")
+
+    BothMessages.send_peer_self_cert(server_self_cert_bytes, peer_sock, shared_key, iv)
+    print("\n Sent self Cert\n")
 
 
-
-
+    
 
 
 
@@ -587,7 +596,7 @@ if __name__ == '__main__':
 
                 if (r == server_socket):
                     print("Handshake with client")
-                    recv_handshake_from_initiator(server_socket, server_private_key, server_public_key)
+                    recv_handshake_from_initiator(server_socket, server_private_key, server_public_key, server_self_cert_bytes)
                     continue
         
                 # print("Reiceving on some peer")

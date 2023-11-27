@@ -14,6 +14,7 @@ class Peer:
         self.sock = sd
         self.peer_last_message_time = datetime.now()
         self.peer_last_send_time = -1
+        self.peer_certificate = 0
         self.handshake_complete = 0
 
     def __str__(self):

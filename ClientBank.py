@@ -39,7 +39,8 @@ def send_recv_handshake(server_socket: socket, client_private_key, client_public
     Sends and receives banking handshake needed to initiate a connection from the clien
     with the server.
     """
-    global shared_key, iv
+    global shared_key, iv, server_peer
+
     # Recv Server Pub key
     server_public_key = util.recieve_public_key(server_socket)
     # Load the received public key in DER (Distinguished Encoding Rules) format
@@ -59,9 +60,17 @@ def send_recv_handshake(server_socket: socket, client_private_key, client_public
     # print(f"IV: {iv}\n")
     
 
-    
+    BothMessages.send_peer_self_cert(client_self_cert_bytes, server_socket, shared_key, iv)
 
+    print("\nSent self Cert\n")
 
+    server_self_cert = BothMessages.recv_peer_self_cert(server_socket, shared_key, iv)
+
+    server_peer.peer_certificate = server_self_cert
+
+    print("\nRecieved Peer Certificate:")
+    print(server_peer.peer_certificate)
+    print("\n")
 
 
 
