@@ -104,7 +104,10 @@ def package_and_sign_message(message, shared_key, iv, private_key):
     return packaged_message
 
 
-def unpackage_signed_message(package, shared_key, iv, sender_public_key):
+def unpackage_signed_message(package, shared_key, iv, peer_package_self_cert):
+
+    sender_public_key = peer_package_self_cert.public_key()
+
     sign_len = 256
     package_len = len(package)
     print(f"Test; Package length: {package_len}")
@@ -117,6 +120,7 @@ def unpackage_signed_message(package, shared_key, iv, sender_public_key):
     else:
         print(f"Invalid Package, rejected!")
     return decrypted_message
+
 # END of new functions for signature
 
 

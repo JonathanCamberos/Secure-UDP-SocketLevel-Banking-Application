@@ -128,14 +128,20 @@ def get_packet_data(r):
     return data
 
 
-def encrypt_and_send(message, server_sock, key, iv, private_key):
+def encrypt_and_send(message, server_sock, key, iv, private_key, self_cert):
     # Encrypt message using shared key and iv
     encrypted_message = util.package_and_sign_message(message, key, iv, private_key)
     # add 4 bytes containing package length and prepend this to the package
     length = len(encrypted_message).to_bytes(4, "big")
+
+
+
     encr_message_with_length_prefix = b"".join([length, encrypted_message])
 
     send_package(encr_message_with_length_prefix, server_sock)
+
+
+    send_peer_self_cert(self_cert, server_sock, key, iv)
 
     return
 

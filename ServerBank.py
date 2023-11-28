@@ -615,6 +615,9 @@ if __name__ == '__main__':
                 #       Reads a pre-pended length, and returns package
                 #       In this case, returns the encrypted package
                 encrypted_message = BothMessages.get_packet_data(r)
+                
+                # NOTE************************** We still have the certificate in the recv() queue!!!
+
 
                 # Now we must unencrypt/unpackage the encrypted package
                 # We call it uncrypt/unpackge because this current encrypted package has 2 portions
@@ -697,6 +700,13 @@ if __name__ == '__main__':
 
                     client_public_key = client_we_are_serving.peer_certificate.public_key()
 
+                    # NOTE ****************************************************** Recieving the Certificate in recv() queue
+                    client_we_are_serving_package_self_cert = BothMessages.recv_peer_self_cert(r, client_we_are_serving.shared_key, client_we_are_serving.iv)
+                    print("\nTESTING TESTING TESTING")
+                    print(client_we_are_serving_package_self_cert)
+                    print("\n TESTING TESTING TESTING")
+
+
                     # Jussssst in case (this case will never happen)
                     if packet_header == Headers.KEEP_ALIVE:
 
@@ -713,6 +723,8 @@ if __name__ == '__main__':
                     #       2. Username
                     #       3. Length of Password
                     #       4. Password
+
+                    # 1. CLIENT REQUEST encrypted
                     elif packet_header == Headers.LOGIN_REQUEST_HEADER:
 
                         print("Recieved Packet Type LOGIN")
@@ -739,13 +751,19 @@ if __name__ == '__main__':
                             # print(f"Client Status username {client_we_are_serving.holder_username}")
                             # print(f"Client Status password {client_we_are_serving.holder_password}")
 
-                            ServerMessages.send_login_success_response(r, client.shared_key,client.iv, server_private_rsa_key)
+                            # 1. SERVER RESPONSE encrypted
+                            ServerMessages.send_login_success_response(r, client.shared_key, client.iv, 
+                                                                       server_private_rsa_key, 
+                                                                       server_self_cert_bytes)
 
                         else:
                             # Client put wrong password
 
+                            # 1. SERVER RESPONSE encrypted
                             print("Error occurred")
-                            ServerMessages.send_login_error_response(r, client.shared_key,client.iv, server_private_rsa_key)
+                            ServerMessages.send_login_error_response(r, client.shared_key,client.iv, 
+                                                                     server_private_rsa_key, 
+                                                                     server_self_cert_bytes)
 
 
                     # Modify Savings Request
@@ -788,9 +806,12 @@ if __name__ == '__main__':
                         if res2 == True:
                             # Sends user modification request
                             ServerMessages.send_modify_savings_success_response(r, client.shared_key,client.iv,
-                                                                                server_private_rsa_key)
+                                                                                server_private_rsa_key,
+                                                                                server_self_cert_bytes)
                         else:
-                            ServerMessages.send_modify_savings_error_response(r, client.shared_key,client.iv, server_private_rsa_key)
+                            ServerMessages.send_modify_savings_error_response(r, client.shared_key, client.iv, 
+                                                                              server_private_rsa_key,
+                                                                              server_self_cert_bytes)
 
                     # View Savings Request
                     #   Parameters:
@@ -816,7 +837,8 @@ if __name__ == '__main__':
 
                         # Send response
                         ServerMessages.send_view_savings_success_response(savings, r, client.shared_key,client.iv,
-                                                                          server_private_rsa_key)
+                                                                          server_private_rsa_key,
+                                                                          server_self_cert_bytes)
 
 
                     # New User Request
@@ -837,7 +859,8 @@ if __name__ == '__main__':
                         if check_user_exists(username) == True:
                             print("User already Exists not exist")
                             ServerMessages.send_user_name_taken_error_response(r, client.shared_key,client.iv,
-                                                                               server_private_rsa_key)
+                                                                               server_private_rsa_key,
+                                                                               server_self_cert_bytes)
 
 
                         # New username!
@@ -849,9 +872,13 @@ if __name__ == '__main__':
                         # non-1 if MongoDB has some sort of error
                         # Either sent to user
                         if res3 == 1:
-                            ServerMessages.send_user_created_response(r, client.shared_key,client.iv, server_private_rsa_key)
+                            ServerMessages.send_user_created_response(r, client.shared_key,client.iv, 
+                                                                      server_private_rsa_key,
+                                                                      server_self_cert_bytes)
                         else:
-                            ServerMessages.send_user_mongo_error_response(r, client.shared_key,client.iv, server_private_rsa_key)
+                            ServerMessages.send_user_mongo_error_response(r, client.shared_key,client.iv,
+                                                                          server_private_rsa_key,
+                                                                          server_self_cert_bytes)
 
 
                     # Disconnect Request
@@ -862,7 +889,10 @@ if __name__ == '__main__':
                     elif packet_header == Headers.DISCONNECT_CLIENT:
                         # TODO: Handle disconnect
                         #server_on = False
-                        ServerMessages.send_disconnect_succes_response(r, client.shared_key,client.iv, server_private_rsa_key)
+                        ServerMessages.send_disconnect_succes_response(r, client.shared_key,client.iv, 
+                                                                       server_private_rsa_key,
+                                                                       server_self_cert_bytes)
+                        
                         client_state_list.remove(client_we_are_serving)
                         print("Client Disconnected, removed from connection list")
                         
