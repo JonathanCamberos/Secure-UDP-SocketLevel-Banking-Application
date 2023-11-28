@@ -29,7 +29,6 @@ import Headers
 import util
 import ServerMessages
 import BothMessages
-import Mongo_util
 
 client_state_list = []
 server_self_cert = ''
