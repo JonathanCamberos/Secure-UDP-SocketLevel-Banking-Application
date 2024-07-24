@@ -1,6 +1,6 @@
 # UDP-Socket-Banking-Application
-Kinda like payall :) 
 
+Secure socket level Banking Application with Certificate Authority server using PKI with MongoDB backend for transactions
 
 To use - Have 2 Ubuntu Terminals Open (or any terminal) <br /> <br />
 
