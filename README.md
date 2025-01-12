@@ -1,11 +1,30 @@
 # UDP-Socket-Banking-Application
 
-Secure socket level Banking Application with Certificate Authority server using PKI with MongoDB backend for transactions
+
+Socket Banking Application Summary
+
+Group Members: Jonathan Camberos, Walter Rees, Mateo Sarri
+
+Technology Stack: Python, MongoDB
+
+Supported Features:
+
+● Server capable of concurent connections with separate Clients
+
+● Secure communication protocol utilizing tls handshake between server and client as well as Certifiacte Authority Server to guarante authenticity of connections
+
+● Client can modify bank account accordinly (withdraw funds, transfer funds, etc)
+
+● Date stored in Mongo
+
+
+Starting up:
 
 To use - Have 2 Ubuntu Terminals Open (or any terminal) <br /> <br />
 
-- First Clone the GitHub Directory <br />
+- Clone the GitHub Directory <br />
 Run the following: <br />
+
   1. cloning <br />
      'git clone <url>' <br />
 
